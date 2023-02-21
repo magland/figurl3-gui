@@ -5,6 +5,7 @@ import axios from "axios"
 import QueryString from 'querystring'
 import { getGitHubTokenInfoFromLocalStorage } from "../GithubAuth/getGithubAuthFromLocalStorage"
 import { localKacheryServerBaseUrl, localKacheryServerIsAvailable, localKacheryServerIsEnabled } from "../MainWindow/LocalKacheryDialog"
+import RtcshareFileSystemClient from "../Rtcshare/RtcshareDataManager/RtcshareFileSystemClient"
 import { signMessage } from "./crypto/signatures"
 import deserializeReturnValue from "./deserializeReturnValue"
 import { StoreFileRequest, StoreFileResponse, StoreGithubFileRequest, StoreGithubFileResponse } from "./FigurlRequestTypes"
@@ -38,14 +39,20 @@ const communicateWithFigureWindow = (
         githubAuth?: {userId?: string, accessToken?: string},
         zone?: string,
         onSetUrlState: (state: {[k: string]: any}) => void,
-        verifyPermissions: (purpose: 'store-file' | 'store-github-file', params: any) => Promise<boolean>
+        verifyPermissions: (purpose: 'store-file' | 'store-github-file', params: any) => Promise<boolean>,
+        rtcshareFileSystemClient: RtcshareFileSystemClient | undefined
     }
 ) => {
-    const {figureId, figureDataUri, kacheryGatewayUrl, githubAuth, zone, verifyPermissions} = o
+    const {figureId, figureDataUri, kacheryGatewayUrl, githubAuth, zone, verifyPermissions, rtcshareFileSystemClient} = o
     const contentWindow = e.contentWindow
     if (!contentWindow) {
         console.warn('No contentWindow on iframe element')
         return
+    }
+    let rtcshareBaseDir: string | undefined = undefined
+    if (figureDataUri.startsWith('rtcshare://')) {
+        const aa = figureDataUri.split('/')
+        rtcshareBaseDir = aa.slice(0, aa.length - 1).join('/')
     }
     addMessageListener(figureId, (msg: any) => {
         ;(async () => {
@@ -140,7 +147,7 @@ const communicateWithFigureWindow = (
         }
 
         if (req.type === 'getFigureData') {
-            const a = await _loadFileFromUri(figureDataUri, undefined, undefined, () => {}, {kacheryGatewayUrl, githubAuth, zone, name: 'root'})
+            const a = await _loadFileFromUri(figureDataUri, undefined, undefined, () => {}, {kacheryGatewayUrl, githubAuth, zone, name: 'root', rtcshareFileSystemClient, rtcshareBaseDir})
             if (!a) return
             const dec = new TextDecoder()
             const figureData = await deserializeReturnValue(JSON.parse(dec.decode(a.arrayBuffer)))
@@ -159,7 +166,7 @@ const communicateWithFigureWindow = (
                 }
                 contentWindow.postMessage(mm, '*')
             }
-            const a = await _loadFileFromUri(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth, zone})
+            const a = await _loadFileFromUri(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth, zone, rtcshareFileSystemClient, rtcshareBaseDir})
             if (!a) return
             const rt = req.responseType || 'json-deserialized'
             let fileData
@@ -214,6 +221,7 @@ const communicateWithFigureWindow = (
     let canceled = false
     ; (async () => {
         // important to do this multiple times because the window might not be loaded right from the outset
+        // in the future we can handle this differently by sending it immediately after receiving the first message from the child window
         for (let i = 0; i < 5; i++) {
             if (canceled) return
             const msg: SetCurrentUserMessage = {
@@ -249,7 +257,13 @@ const _getFileUrlFromUri = async (uri: string, o: {kacheryGatewayUrl: string, gi
     else return undefined
 }
 
-const _loadFileFromUri = async (uri: string, startByte: number | undefined, endByte: number | undefined, onProgress: (a: {loaded: number, total: number}) => void, o: {kacheryGatewayUrl: string, githubAuth?: {userId?: string, accessToken?: string}, zone?: string, name?: string}): Promise<{arrayBuffer: ArrayBuffer, size?: number, foundLocally: boolean} | undefined> => {
+const _loadFileFromUri = async (uri: string, startByte: number | undefined, endByte: number | undefined, onProgress: (a: {loaded: number, total: number}) => void, o: {kacheryGatewayUrl: string, githubAuth?: {userId?: string, accessToken?: string}, zone?: string, name?: string, rtcshareFileSystemClient: RtcshareFileSystemClient | undefined, rtcshareBaseDir?: string}): Promise<{arrayBuffer: ArrayBuffer, size?: number, foundLocally: boolean} | undefined> => {
+    if (uri.startsWith('$dir/')) {
+        if (!o.rtcshareBaseDir) {
+            throw Error('No rtcshare base dir.')
+        }
+        uri = o.rtcshareBaseDir + '/' + uri.slice('$dir/'.length)
+    }
     requestedFileUris.push(uri)
     if (uri.startsWith('sha1://')) {
         const aa = await _getFileUrlFromUri(uri, o)
@@ -305,6 +319,14 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
     else if (uri.startsWith('gh://')) {
         const {content: arrayBuffer} = await loadGitHubFileDataFromUri(uri)
         return {arrayBuffer, size: arrayBuffer.byteLength, foundLocally: false}
+    }
+    else if (uri.startsWith('rtcshare://')) {
+        if (!o.rtcshareFileSystemClient) {
+            throw Error('No rtcshare client')
+        }
+        const ppath = uri.slice('rtcshare://'.length)
+        const arrayBuffer = await o.rtcshareFileSystemClient.readFile(ppath, startByte, endByte)
+        return {arrayBuffer, size: undefined, foundLocally: false}
     }
     else {
         throw Error(`Unexpected data URI: ${uri}`)

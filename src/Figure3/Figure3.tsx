@@ -7,6 +7,8 @@ import { useGithubAuth } from "../GithubAuth/useGithubAuth";
 import { useModalDialog } from '../MainWindow/ApplicationBar';
 import { randomAlphaLowerString } from "../randomAlphaString";
 import { useRoute2 } from "../Route/useRoute2";
+import { serviceBaseUrl } from '../Rtcshare/config';
+import { useRtcshare } from '../Rtcshare/useRtcshare';
 import communicateWithFigureWindow from "./communicateWithFigureWindow";
 import getZoneInfo from "./getZoneInfo";
 import GitHubPermissionsWindow from './GitHubPermissionsWindow';
@@ -95,6 +97,8 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [figureId, viewUrl]) // intentionally exclude query.s from dependencies so we don't get a refresh when state changes
 
+    const {client: rtcshareFileSystemClient} = useRtcshare()
+
     useEffect(() => {
         // if (iframeElement.current) return // already set
         if (!figureDataUri) {
@@ -103,6 +107,7 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
         }
         if (!iframeElement) return
         if (!kacheryGatewayUrl) return
+        if ((!rtcshareFileSystemClient) && (serviceBaseUrl)) return
         const cancel = communicateWithFigureWindow(
             iframeElement,
             {
@@ -112,12 +117,13 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
                 githubAuth,
                 zone,
                 onSetUrlState,
-                verifyPermissions
+                verifyPermissions,
+                rtcshareFileSystemClient
             }
         )
         iframeElement.src = src
         return cancel
-    }, [iframeElement, figureDataUri, figureId, kacheryGatewayUrl, zone, onSetUrlState, verifyPermissions, src, githubAuth])
+    }, [iframeElement, figureDataUri, figureId, kacheryGatewayUrl, zone, onSetUrlState, verifyPermissions, src, githubAuth, rtcshareFileSystemClient])
 
     return (
         <div style={{position: 'absolute', width, height, overflow: 'hidden'}}>

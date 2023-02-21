@@ -2051,6 +2051,13 @@
   dependencies:
     "@types/node" "*"
 
+"@types/simple-peer@^9.11.5":
+  version "9.11.5"
+  resolved "https://registry.yarnpkg.com/@types/simple-peer/-/simple-peer-9.11.5.tgz#6baa00edbbd0f632f8561e8fb03b4d21d62f076e"
+  integrity sha512-haXgWcAa3Y3Sn+T8lzkE4ErQUpYzhW6Cz2lh00RhQTyWt+xZ3s87wJPztUxlqSdFRqGhe2MQIBd0XsyHP3No4w==
+  dependencies:
+    "@types/node" "*"
+
 "@types/unist@*", "@types/unist@^2.0.0":
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/@types/unist/-/unist-2.0.6.tgz#250a7b16c3b91f672a24552ec64678eeb1d3a08d"

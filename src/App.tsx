@@ -1,9 +1,8 @@
 import { ThemeProvider } from '@mui/private-theming'
-import { useState } from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import GithubAuthSetup from './GithubAuth/GithubAuthSetup'
 import MainWindow from './MainWindow/MainWindow'
-import { useRoute2 } from './Route/useRoute2'
+import SetupRtcshare from './Rtcshare/SetupRtcshare'
 import theme from './theme'
 
 function App() {
@@ -11,7 +10,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <BrowserRouter>
         <GithubAuthSetup>
-          <MainWindow hideApplicationBar={false} />
+          <SetupRtcshare>
+            <MainWindow hideApplicationBar={false} />
+          </SetupRtcshare>
         </GithubAuthSetup>
       </BrowserRouter>
     </ThemeProvider>
