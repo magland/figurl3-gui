@@ -1,11 +1,17 @@
+import { JSONStringifyDeterministic } from '@figurl/interface/dist/viewInterface/kacheryTypes';
 import QueryString from 'querystring';
 import { FunctionComponent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Location, useLocation, useNavigate } from "react-router-dom";
+import ModalWindow from '../components/ModalWindow/ModalWindow';
 import { useGithubAuth } from "../GithubAuth/useGithubAuth";
+import { useModalDialog } from '../MainWindow/ApplicationBar';
 import { randomAlphaLowerString } from "../randomAlphaString";
 import { useRoute2 } from "../Route/useRoute2";
 import communicateWithFigureWindow from "./communicateWithFigureWindow";
 import getZoneInfo from "./getZoneInfo";
+import GitHubPermissionsWindow from './GitHubPermissionsWindow';
+import PermissionsWindow from './PermissionsWindow';
+import sleepMsec from './sleepMsec';
 
 type Props = {
     width: number
@@ -16,6 +22,8 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
     const {viewUrl, figureDataUri, zone} = useRoute2()
     const qs = window.location.search.slice(1)
     const query = useMemo(() => (QueryString.parse(qs)), [qs]);
+
+    const {visible: authorizePermissionsWindowVisible, handleOpen: openAuthorizePermissionsWindow, handleClose: closeAuthorizePermissionsWindow} = useModalDialog()
 
     const location = useLocation()
     const navigate = useNavigate()
@@ -53,6 +61,27 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
         navigate(newLocation)
     }, [navigate])
 
+    const authorizedPermissionsRef = useRef<{[k: string]: boolean | undefined}>({})
+    const [authorizePermissionsData, setAuthorizePermissionsData] = useState<{purpose: 'store-file' | 'store-github-file', params: any}>()
+    const onRequestPermissions = useCallback((purpose: 'store-file' | 'store-github-file', params: any) => {
+        setAuthorizePermissionsData({purpose, params})
+        openAuthorizePermissionsWindow()
+    }, [setAuthorizePermissionsData, openAuthorizePermissionsWindow])
+
+    const verifyPermissions = useMemo(() => {
+        return async (purpose: 'store-file' | 'store-github-file', params: any): Promise<boolean> => {
+            const k = `${purpose}.${JSONStringifyDeterministic(params)}`
+            if (authorizedPermissionsRef.current[k] === true) return true
+            authorizedPermissionsRef.current[k] = undefined
+            onRequestPermissions(purpose, params)
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                if (authorizedPermissionsRef.current[k] !== undefined) return (authorizedPermissionsRef.current[k] || false)
+                await sleepMsec(200)
+            }
+        }
+    }, [onRequestPermissions])
+
     const [iframeElement, setIframeElement] = useState<HTMLIFrameElement | null>()
     const figureId = useMemo(() => (randomAlphaLowerString(10)), [])
     useEffect(() => {
@@ -63,9 +92,20 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
         }
         if (!iframeElement) return
         if (!kacheryGatewayUrl) return
-        const cancel = communicateWithFigureWindow(iframeElement, {figureId, figureDataUri, kacheryGatewayUrl, githubAuth, zone, onSetUrlState})
+        const cancel = communicateWithFigureWindow(
+            iframeElement,
+            {
+                figureId,
+                figureDataUri,
+                kacheryGatewayUrl,
+                githubAuth,
+                zone,
+                onSetUrlState,
+                verifyPermissions
+            }
+        )
         return cancel
-    }, [iframeElement, figureDataUri, figureId, kacheryGatewayUrl, githubAuth, zone, onSetUrlState])
+    }, [iframeElement, figureDataUri, figureId, kacheryGatewayUrl, githubAuth, zone, onSetUrlState, verifyPermissions])
     const src = useMemo(() => {
         if (!viewUrl) return ''
         const parentOrigin = window.location.protocol + '//' + window.location.host
@@ -76,15 +116,37 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
         return src
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [figureId, viewUrl]) // intentionally exclude query.s from dependencies so we don't get a refresh when state changes
+
     return (
-        <iframe
-            ref={e => {setIframeElement(e)}}
-            title="figure"
-            src={src}
-            width={width}
-            height={height}
-            frameBorder="0"
-        />
+        <div style={{position: 'absolute', width, height, overflow: 'hidden'}}>
+            <iframe
+                ref={e => {setIframeElement(e)}}
+                title="figure"
+                src={src}
+                width={width}
+                height={height}
+                frameBorder="0"
+            />
+            <ModalWindow
+                open={authorizePermissionsWindowVisible && (authorizePermissionsData?.purpose === 'store-file')}
+                onClose={undefined}
+            >
+                <PermissionsWindow
+                    onClose={closeAuthorizePermissionsWindow}
+                    authorizedPermissionsRef={authorizedPermissionsRef}
+                />
+            </ModalWindow>
+            <ModalWindow
+                open={authorizePermissionsWindowVisible && (authorizePermissionsData?.purpose === 'store-github-file')}
+                onClose={undefined}
+            >
+                <GitHubPermissionsWindow
+                    onClose={closeAuthorizePermissionsWindow}
+                    params={authorizePermissionsData?.params || {}}
+                    authorizedPermissionsRef={authorizedPermissionsRef}
+                />
+            </ModalWindow>
+        </div>
     )
 }
 

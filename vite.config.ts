@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: "https://figurl.org",
   resolve: {
     alias: {
       "simple-peer": "simple-peer/simplepeer.min.js"

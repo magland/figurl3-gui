@@ -1,12 +1,17 @@
-import { FigurlRequest, FigurlResponse, isFigurlRequest, isGetFileDataUrlResponse } from "@figurl/interface/dist/viewInterface/FigurlRequestTypes"
-import { FileDownloadProgressMessage } from "@figurl/interface/dist/viewInterface/MessageToChildTypes"
+import { FigurlRequest, FigurlResponse, isFigurlRequest, StoreGithubFileResponse as StoreGithubFileResponseFigurl } from "@figurl/interface/dist/viewInterface/FigurlRequestTypes"
+import { UserId } from "@figurl/interface/dist/viewInterface/kacheryTypes"
+import { FileDownloadProgressMessage, SetCurrentUserMessage } from "@figurl/interface/dist/viewInterface/MessageToChildTypes"
 import axios from "axios"
 import QueryString from 'querystring'
+import { getGitHubTokenInfoFromLocalStorage } from "../GithubAuth/getGithubAuthFromLocalStorage"
 import { localKacheryServerBaseUrl, localKacheryServerIsAvailable, localKacheryServerIsEnabled } from "../MainWindow/LocalKacheryDialog"
 import { signMessage } from "./crypto/signatures"
 import deserializeReturnValue from "./deserializeReturnValue"
+import { StoreFileRequest, StoreFileResponse, StoreGithubFileRequest, StoreGithubFileResponse } from "./FigurlRequestTypes"
 import { FindFileRequest, isFindFileResponse } from "./GatewayRequest"
 import { getKacheryCloudClientInfo } from "./getKacheryCloudClientInfo"
+import kacheryCloudStoreFile from "./kacheryCloudStoreFile"
+import storeGithubFile, { loadGitHubFileDataFromUri, parseGitHubFileUri } from "./storeGithubFile"
 
 const messageListeners: {[figureId: string]: (msg: any) => void} = {}
 
@@ -23,8 +28,19 @@ window.addEventListener('message', (e: MessageEvent) => {
     }
 })
 
-const communicateWithFigureWindow = (e: HTMLIFrameElement, o: {figureId: string, figureDataUri: string, kacheryGatewayUrl: string, githubAuth?: {userId?: string, accessToken?: string}, zone?: string, onSetUrlState: (state: {[k: string]: any}) => void}) => {
-    const {figureId, figureDataUri, kacheryGatewayUrl, githubAuth, zone} = o
+const communicateWithFigureWindow = (
+    e: HTMLIFrameElement,
+    o: {
+        figureId: string,
+        figureDataUri: string,
+        kacheryGatewayUrl: string,
+        githubAuth?: {userId?: string, accessToken?: string},
+        zone?: string,
+        onSetUrlState: (state: {[k: string]: any}) => void,
+        verifyPermissions: (purpose: 'store-file' | 'store-github-file', params: any) => Promise<boolean>
+    }
+) => {
+    const {figureId, figureDataUri, kacheryGatewayUrl, githubAuth, zone, verifyPermissions} = o
     const contentWindow = e.contentWindow
     if (!contentWindow) {
         console.warn('No contentWindow on iframe element')
@@ -50,6 +66,78 @@ const communicateWithFigureWindow = (e: HTMLIFrameElement, o: {figureId: string,
         })()
     })
     const _handleFigurlRequest = async (req: FigurlRequest): Promise<FigurlResponse | undefined> => {
+        const handleStoreFileRequest = async (req: StoreFileRequest): Promise<StoreFileResponse> => {
+            if (!(await verifyPermissions('store-file', {}))) {
+                return {
+                    type: 'storeFile',
+                    uri: undefined
+                }
+            }
+            
+            const {fileData} = req
+            const uri = await kacheryCloudStoreFile(fileData, kacheryGatewayUrl, githubAuth, zone || 'default')
+            if (!uri) throw Error('Error storing file')
+            return {
+                type: 'storeFile',
+                uri
+            }
+        }
+        const handleStoreGithubFileRequest = async (req: StoreGithubFileRequest): Promise<StoreGithubFileResponse> => {
+            const {fileData, uri} = req
+            if (!uri.startsWith('gh://')) {
+                throw Error(`Invalid github URI: ${uri}`)
+            }
+            if (!(await verifyPermissions('store-github-file', {uri}))) {
+                return {
+                    type: 'storeGithubFile',
+                    success: false,
+                    error: 'Permission not granted'
+                }
+            }
+            const storeHelper = async (uri: string, fileData: ArrayBuffer): Promise<StoreGithubFileResponseFigurl> => {
+                const githubTokenInfo = getGitHubTokenInfoFromLocalStorage()
+                if (!githubTokenInfo?.token) {
+                    return {
+                        type: 'storeGithubFile',
+                        success: false,
+                        error: 'No github token'
+                    }
+                }
+                try {
+                    await storeGithubFile({fileData, uri})
+                }
+                catch(err: any) {
+                    return {
+                        type: 'storeGithubFile',
+                        success: false,
+                        error: `Error storing github file: ${err.message}`
+                    }
+                }
+                return {
+                    type: 'storeGithubFile',
+                    success: true
+                }
+            }
+            const {fileName} = parseGitHubFileUri(uri)
+            if (fileName.endsWith('.uri')) {
+                // store file in kachery-cloud, get the URI and store that on github (because the file ends with .uri)
+                const {uri: uri2} = await handleStoreFileRequest({type: 'storeFile', fileData})
+                if (uri2) {
+                    return await storeHelper(uri, str2ab(uri2))
+                }
+                else {
+                    return {
+                        type: 'storeGithubFile',
+                        success: false,
+                        error: 'Problem storing file in kachery'
+                    }
+                }
+            }
+            else {
+                return await storeHelper(uri, str2ab(fileData))
+            }
+        }
+
         if (req.type === 'getFigureData') {
             const a = await _loadFileFromUri(figureDataUri, undefined, undefined, () => {}, {kacheryGatewayUrl, githubAuth, zone, name: 'root'})
             if (!a) return
@@ -116,12 +204,17 @@ const communicateWithFigureWindow = (e: HTMLIFrameElement, o: {figureId: string,
             }
         }
         else if (req.type === 'storeFile') {
-            // todo
+            return await handleStoreFileRequest(req)
         }
         else if (req.type === 'storeGithubFile') {
-            // todo
+            return await handleStoreGithubFileRequest(req)
         }
     }
+    const msg: SetCurrentUserMessage = {
+        type: 'setCurrentUser',
+        userId: githubAuth && githubAuth.userId ? githubAuth.userId as any as UserId : undefined
+    }
+    contentWindow.postMessage(msg, '*')
     return () => {
         delete messageListeners[figureId]
     }
@@ -198,6 +291,10 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
             })
         }
         return {arrayBuffer, size, foundLocally}
+    }
+    else if (uri.startsWith('gh://')) {
+        const {content: arrayBuffer} = await loadGitHubFileDataFromUri(uri)
+        return {arrayBuffer, size: arrayBuffer.byteLength, foundLocally: false}
     }
     else {
         throw Error(`Unexpected data URI: ${uri}`)
@@ -291,6 +388,11 @@ const getFileDownloadUrlForLocalKacheryServer = async (hashAlg: string, hash: st
     else {
         return undefined
     }
+}
+
+function str2ab(str: string) {
+    const enc = new TextEncoder()
+    return enc.encode(str)
 }
 
 export default communicateWithFigureWindow

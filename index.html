@@ -8,6 +8,11 @@
     <script>
       window.global = window
     </script>
+    <script type="module">
+      // See comment in source code (search for Octokit)
+      import { Octokit } from "https://cdn.skypack.dev/octokit";
+      window.Octokit = Octokit
+    </script>
   </head>
   <body>
     <div id="root"></div>
