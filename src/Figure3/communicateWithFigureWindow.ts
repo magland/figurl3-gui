@@ -11,6 +11,7 @@ import { StoreFileRequest, StoreFileResponse, StoreGithubFileRequest, StoreGithu
 import { FindFileRequest, isFindFileResponse } from "./GatewayRequest"
 import { getKacheryCloudClientInfo } from "./getKacheryCloudClientInfo"
 import kacheryCloudStoreFile from "./kacheryCloudStoreFile"
+import sleepMsec from "./sleepMsec"
 import storeGithubFile, { loadGitHubFileDataFromUri, parseGitHubFileUri } from "./storeGithubFile"
 
 const messageListeners: {[figureId: string]: (msg: any) => void} = {}
@@ -210,12 +211,21 @@ const communicateWithFigureWindow = (
             return await handleStoreGithubFileRequest(req)
         }
     }
-    const msg: SetCurrentUserMessage = {
-        type: 'setCurrentUser',
-        userId: githubAuth && githubAuth.userId ? githubAuth.userId as any as UserId : undefined
-    }
-    contentWindow.postMessage(msg, '*')
+    let canceled = false
+    ; (async () => {
+        // important to do this multiple times because the window might not be loaded right from the outset
+        for (let i = 0; i < 5; i++) {
+            if (canceled) return
+            const msg: SetCurrentUserMessage = {
+                type: 'setCurrentUser',
+                userId: githubAuth && githubAuth.userId ? githubAuth.userId as any as UserId : undefined
+            }
+            contentWindow.postMessage(msg, '*')
+            await sleepMsec(1000)
+        }
+    })()
     return () => {
+        canceled = true
         delete messageListeners[figureId]
     }
 }

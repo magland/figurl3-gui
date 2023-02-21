@@ -43,7 +43,6 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
                 if (!resp.found) {
                     throw Error(`Unrecognized zone: ${zone}`)
                 }
-                console.log(`--- setting kachery gateway url: ${resp.kacheryGatewayUrl}`)
                 setKacheryGatewayUrl(resp.kacheryGatewayUrl)
             })
         }
@@ -84,6 +83,18 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
 
     const [iframeElement, setIframeElement] = useState<HTMLIFrameElement | null>()
     const figureId = useMemo(() => (randomAlphaLowerString(10)), [])
+
+    const src = useMemo(() => {
+        if (!viewUrl) return ''
+        const parentOrigin = window.location.protocol + '//' + window.location.host
+        let src = `${viewUrl}?parentOrigin=${parentOrigin}&figureId=${figureId}`
+        if (query.s) {
+            src += `&s=${query.s}`
+        }
+        return src
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [figureId, viewUrl]) // intentionally exclude query.s from dependencies so we don't get a refresh when state changes
+
     useEffect(() => {
         // if (iframeElement.current) return // already set
         if (!figureDataUri) {
@@ -104,25 +115,15 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
                 verifyPermissions
             }
         )
+        iframeElement.src = src
         return cancel
-    }, [iframeElement, figureDataUri, figureId, kacheryGatewayUrl, githubAuth, zone, onSetUrlState, verifyPermissions])
-    const src = useMemo(() => {
-        if (!viewUrl) return ''
-        const parentOrigin = window.location.protocol + '//' + window.location.host
-        let src = `${viewUrl}?parentOrigin=${parentOrigin}&figureId=${figureId}`
-        if (query.s) {
-            src += `&s=${query.s}`
-        }
-        return src
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [figureId, viewUrl]) // intentionally exclude query.s from dependencies so we don't get a refresh when state changes
+    }, [iframeElement, figureDataUri, figureId, kacheryGatewayUrl, zone, onSetUrlState, verifyPermissions, src, githubAuth])
 
     return (
         <div style={{position: 'absolute', width, height, overflow: 'hidden'}}>
             <iframe
                 ref={e => {setIframeElement(e)}}
                 title="figure"
-                src={src}
                 width={width}
                 height={height}
                 frameBorder="0"

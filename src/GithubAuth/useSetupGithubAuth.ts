@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getGitHubTokenInfoFromLocalStorage, setGitHubTokenInfoToLocalStorage } from './getGithubAuthFromLocalStorage'
 import { GithubAuthData } from './GithubAuthContext'
 
@@ -68,14 +68,14 @@ const useSetupGithubAuth = (): GithubAuthData => {
         setGitHubTokenInfoToLocalStorage({})
     }, [])
 
-    return {
+    return useMemo(() => ({
         signedIn: loginStatus.status === 'logged-in',
         userId: userName,
         accessToken: loginStatus.accessToken,
         isPersonalAccessToken: loginStatus.isPersonalAccessToken,
         loginStatus: loginStatus.status,
         clearAccessToken
-    }
+    }), [clearAccessToken, loginStatus.accessToken, loginStatus.isPersonalAccessToken, loginStatus.status, userName])
 }
 
 export default useSetupGithubAuth
