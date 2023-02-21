@@ -1,22 +1,29 @@
-import { FunctionComponent } from "react";
+import { FunctionComponent, useEffect } from "react";
+import { useRoute2 } from "../Route/useRoute2";
 import Routes from "../Routes/Routes";
 import useWindowDimensions from "../useWindowDimensions";
 import ApplicationBar from "./ApplicationBar";
 
 type Props = {
     hideApplicationBar: boolean
-    title: string
 }
 
-const MainWindow: FunctionComponent<Props> = ({hideApplicationBar, title}) => {
+const MainWindow: FunctionComponent<Props> = ({hideApplicationBar}) => {
     const {width, height} = useWindowDimensions()
     const applicationBarHeight = !hideApplicationBar && (height >= 400) ? 50 : 0
+
+    const {label} = useRoute2()
+
+    useEffect(() => {
+        const title = label || ''
+        document.title = title || 'figurl'
+    }, [label])
 
     return (
         <div>
             <ApplicationBar
                 applicationBarHeight={applicationBarHeight}
-                title={title}
+                title={label || ''}
             />
             <div>
                 <Routes

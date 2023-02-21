@@ -18,7 +18,7 @@ type Props = {
 }
 
 const ApplicationBar: FunctionComponent<Props> = ({applicationBarHeight, title}) => {
-    const {routePath} = useRoute2()
+    const {routePath, setRoute} = useRoute2()
     const {signedIn, userId} = useGithubAuth()
 
     const {visible: saveFigureVisible, handleOpen: openSaveFigure, handleClose: closeSaveFigure} = useModalDialog()
@@ -26,8 +26,8 @@ const ApplicationBar: FunctionComponent<Props> = ({applicationBarHeight, title})
     const {visible: githubAccessWindowVisible, handleOpen: openGitHubAccessWindow, handleClose: closeGitHubAccessWindow} = useModalDialog()
 
     const onHome = useCallback(() => {
-
-    }, [])
+        setRoute({routePath: '/home', dataUri: '', label: ''})
+    }, [setRoute])
 
     return (
         <span>

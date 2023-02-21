@@ -32,10 +32,12 @@ export const useRoute2 = () => {
         let pathname2 = location.pathname
         if (o.routePath) pathname2 = o.routePath
         if (o.dataUri !== undefined) {
-            query2.d = o.dataUri
+            if (o.dataUri) query2.d = o.dataUri
+            else delete query2['d']
         }
-        if (o.label) {
-            query2.label = o.label
+        if (o.label !== undefined) {
+            if (o.label) query2.label = o.label
+            else delete query2['label']
         }
         const search2 = queryString(query2)
         navigate({...location, pathname: pathname2, search: search2})

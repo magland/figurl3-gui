@@ -1,6 +1,7 @@
-import { FigurlRequest, isFigurlRequest } from "@figurl/interface/dist/viewInterface/FigurlRequestTypes"
+import { FigurlRequest, FigurlResponse, isFigurlRequest, isGetFileDataUrlResponse } from "@figurl/interface/dist/viewInterface/FigurlRequestTypes"
 import { FileDownloadProgressMessage } from "@figurl/interface/dist/viewInterface/MessageToChildTypes"
 import axios from "axios"
+import QueryString from 'querystring'
 import { localKacheryServerBaseUrl, localKacheryServerIsAvailable, localKacheryServerIsEnabled } from "../MainWindow/LocalKacheryDialog"
 import { signMessage } from "./crypto/signatures"
 import deserializeReturnValue from "./deserializeReturnValue"
@@ -22,7 +23,7 @@ window.addEventListener('message', (e: MessageEvent) => {
     }
 })
 
-const communicateWithFigureWindow = (e: HTMLIFrameElement, o: {figureId: string, figureDataUri: string, kacheryGatewayUrl: string, githubAuth?: {userId?: string, accessToken?: string}, zone?: string}) => {
+const communicateWithFigureWindow = (e: HTMLIFrameElement, o: {figureId: string, figureDataUri: string, kacheryGatewayUrl: string, githubAuth?: {userId?: string, accessToken?: string}, zone?: string, onSetUrlState: (state: {[k: string]: any}) => void}) => {
     const {figureId, figureDataUri, kacheryGatewayUrl, githubAuth, zone} = o
     const contentWindow = e.contentWindow
     if (!contentWindow) {
@@ -48,9 +49,9 @@ const communicateWithFigureWindow = (e: HTMLIFrameElement, o: {figureId: string,
             }
         })()
     })
-    const _handleFigurlRequest = async (req: FigurlRequest) => {
+    const _handleFigurlRequest = async (req: FigurlRequest): Promise<FigurlResponse | undefined> => {
         if (req.type === 'getFigureData') {
-            const a = await _loadFileBinary(figureDataUri, undefined, undefined, () => {}, {kacheryGatewayUrl, githubAuth, zone})
+            const a = await _loadFileFromUri(figureDataUri, undefined, undefined, () => {}, {kacheryGatewayUrl, githubAuth, zone, name: 'root'})
             if (!a) return
             const dec = new TextDecoder()
             const figureData = await deserializeReturnValue(JSON.parse(dec.decode(a.arrayBuffer)))
@@ -69,7 +70,7 @@ const communicateWithFigureWindow = (e: HTMLIFrameElement, o: {figureId: string,
                 }
                 contentWindow.postMessage(mm, '*')
             }
-            const a = await _loadFileBinary(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth, zone})
+            const a = await _loadFileFromUri(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth, zone})
             if (!a) return
             const rt = req.responseType || 'json-deserialized'
             let fileData
@@ -97,20 +98,60 @@ const communicateWithFigureWindow = (e: HTMLIFrameElement, o: {figureId: string,
                 fileData
             }
         }
+        else if (req.type === 'getFileDataUrl') {
+            const aa = await _getFileUrlFromUri(req.uri, {kacheryGatewayUrl, githubAuth, zone})
+            if (!aa) return {
+                type: 'getFileDataUrl',
+                errorMessage: `Unable to get file URL from URI: ${req.uri}`
+            }
+            return {
+                type: 'getFileDataUrl',
+                fileDataUrl: aa.url
+            }
+        }
+        else if (req.type === 'setUrlState') {
+            o.onSetUrlState(req.state)
+            return {
+                type: 'setUrlState'
+            }
+        }
+        else if (req.type === 'storeFile') {
+            // todo
+        }
+        else if (req.type === 'storeGithubFile') {
+            // todo
+        }
     }
     return () => {
         delete messageListeners[figureId]
     }
 }
 
-const _loadFileBinary = async (d: string, startByte: number | undefined, endByte: number | undefined, onProgress: (a: {loaded: number, total: number}) => void, o: {kacheryGatewayUrl: string, githubAuth?: {userId?: string, accessToken?: string}, zone?: string}): Promise<{arrayBuffer: ArrayBuffer, size?: number, foundLocally: boolean} | undefined> => {
+export const requestedFileUris: string[] = []
+export const requestedFiles: {[uri: string]: {name?: string, size?: number}} = {}
+
+const _getFileUrlFromUri = async (uri: string, o: {kacheryGatewayUrl: string, githubAuth?: {userId?: string, accessToken?: string}, zone?: string, name?: string}): Promise<{url: string, size?: number, foundLocally: boolean, sha1: string} | undefined> => {
     const {kacheryGatewayUrl, githubAuth, zone} = o
-    if (d.startsWith('sha1://')) {
-        const a = d.split('?')[0].split('/')
+    if (uri.startsWith('sha1://')) {
+        const a = uri.split('?')[0].split('/')
         const sha1 = a[2]
+        const queryStr = a[3] || ''
+        const query = QueryString.parse(queryStr)
         const aa = await getFileDownloadUrl('sha1', sha1, kacheryGatewayUrl, githubAuth, zone)
         if (!aa) return undefined
         const {url, size, foundLocally} = aa
+        requestedFiles[uri] = {size, name: o.name || (query.label as string) || undefined}
+        return {url, size, foundLocally, sha1}
+    }
+    else return undefined
+}
+
+const _loadFileFromUri = async (uri: string, startByte: number | undefined, endByte: number | undefined, onProgress: (a: {loaded: number, total: number}) => void, o: {kacheryGatewayUrl: string, githubAuth?: {userId?: string, accessToken?: string}, zone?: string, name?: string}): Promise<{arrayBuffer: ArrayBuffer, size?: number, foundLocally: boolean} | undefined> => {
+    requestedFileUris.push(uri)
+    if (uri.startsWith('sha1://')) {
+        const aa = await _getFileUrlFromUri(uri, o)
+        if (!aa) return undefined
+        const {url, size, foundLocally, sha1} = aa
         const headers: HeadersInit = {}
         if ((startByte !== undefined) && (endByte !== undefined)) {
             headers['range'] = `bytes ${startByte}-${endByte - 1}`
@@ -159,7 +200,7 @@ const _loadFileBinary = async (d: string, startByte: number | undefined, endByte
         return {arrayBuffer, size, foundLocally}
     }
     else {
-        throw Error(`Unexpected data URI: ${d}`)
+        throw Error(`Unexpected data URI: ${uri}`)
     }
 
 }

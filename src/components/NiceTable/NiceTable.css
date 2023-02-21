@@ -1,0 +1,21 @@
+.NiceTable .MuiTableCell-root {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.NiceTable .MuiIconButton-root {
+    padding: 1px;
+}
+
+.NiceTable2 .MuiTableCell-root {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.NiceTable2 .MuiIconButton-root {
+    padding: 1px;
+}
