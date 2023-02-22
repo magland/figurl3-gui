@@ -167,7 +167,12 @@ const communicateWithFigureWindow = (
                 contentWindow.postMessage(mm, '*')
             }
             const a = await _loadFileFromUri(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth, zone, rtcshareFileSystemClient, rtcshareBaseDir})
-            if (!a) return
+            if (!a) {
+                return {
+                    type: 'getFileData',
+                    errorMessage: `Unable to load file data: ${req.uri}`
+                }
+            }
             const rt = req.responseType || 'json-deserialized'
             let fileData
             const dec = new TextDecoder()
@@ -317,8 +322,13 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
         return {arrayBuffer, size, foundLocally}
     }
     else if (uri.startsWith('gh://')) {
-        const {content: arrayBuffer} = await loadGitHubFileDataFromUri(uri)
-        return {arrayBuffer, size: arrayBuffer.byteLength, foundLocally: false}
+        try {
+            const {content: arrayBuffer} = await loadGitHubFileDataFromUri(uri)
+            return {arrayBuffer, size: arrayBuffer.byteLength, foundLocally: false}
+        }
+        catch(err) {
+            return undefined
+        }
     }
     else if (uri.startsWith('rtcshare://')) {
         if (!o.rtcshareFileSystemClient) {
