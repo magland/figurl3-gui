@@ -269,7 +269,9 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
         }
         uri = o.rtcshareBaseDir + '/' + uri.slice('$dir/'.length)
     }
-    requestedFileUris.push(uri)
+    if (!requestedFileUris.includes(uri)) {
+        requestedFileUris.push(uri)
+    }
     if (uri.startsWith('sha1://')) {
         const aa = await _getFileUrlFromUri(uri, o)
         if (!aa) return undefined
