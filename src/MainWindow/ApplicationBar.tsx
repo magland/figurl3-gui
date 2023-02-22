@@ -4,11 +4,9 @@ import ModalWindow from "../components/ModalWindow/ModalWindow";
 import GitHubLoginWindow from "../GitHub/GitHubLoginWindow";
 import { useGithubAuth } from "../GithubAuth/useGithubAuth";
 import { useRoute2 } from "../Route/useRoute2";
-import useWindowDimensions from "../useWindowDimensions";
 import GitHubAccessControl from "./GitHubAccessControl/GitHubAccessControl";
 import LocalKacheryControl from "./LocalKacheryControl";
 import LocalKacheryDialog from "./LocalKacheryDialog";
-import logo from './logo.png'
 import SaveFigureControl from "./SaveFigure/SaveFigureControl";
 import SaveFigureDialog from "./SaveFigure/SaveFigureDialog";
 
@@ -33,7 +31,7 @@ const ApplicationBar: FunctionComponent<Props> = ({applicationBarHeight, title})
         <span>
             <AppBar position="static" style={{height: applicationBarHeight, color: 'white', background: '#65a6fc'}}>
                 <Toolbar style={{minHeight: 50}}>
-                    <img src={logo} alt="logo" height={30} style={{paddingBottom: 5, cursor: 'pointer'}} onClick={onHome} />
+                    <img src="/logo.png" alt="logo" height={30} style={{paddingBottom: 5, cursor: 'pointer'}} onClick={onHome} />
                     <div>&nbsp;&nbsp;&nbsp;{title}</div>
                     <span style={{marginLeft: 'auto'}} />
                     {

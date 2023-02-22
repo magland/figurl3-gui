@@ -184,7 +184,7 @@ const communicateWithFigureWindow = (
                 fileData = JSON.parse(dec.decode(a.arrayBuffer))
             }
             else if (rt === 'binary') {
-                fileData = a
+                fileData = a.arrayBuffer
             }
             else { // text
                 fileData = dec.decode(a.arrayBuffer)
