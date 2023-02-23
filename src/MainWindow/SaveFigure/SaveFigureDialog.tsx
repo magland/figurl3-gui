@@ -85,6 +85,10 @@ const SaveFigureDialog: FunctionComponent<Props> = ({onClose}) => {
                         <TableCell>{zone || ''}</TableCell>
                     </TableRow>
                     <TableRow>
+                        <TableCell>Rtcshare</TableCell>
+                        <TableCell>{sh || ''}</TableCell>
+                    </TableRow>
+                    <TableRow>
                         <TableCell>Notes</TableCell>
                         <TableCell><EditDescriptionControl description={notes} setDescription={setNotes} /></TableCell>
                     </TableRow>
