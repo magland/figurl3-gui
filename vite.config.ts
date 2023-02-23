@@ -6,14 +6,14 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA(
-      {
-        registerType: 'autoUpdate',
-        devOptions: {
-          enabled: true
-        }
-      }
-    )
+    // VitePWA( // this may have been causing problems. disabling for now
+    //   {
+    //     registerType: 'autoUpdate',
+    //     devOptions: {
+    //       enabled: true
+    //     }
+    //   }
+    // )
   ],
   resolve: {
     alias: {
