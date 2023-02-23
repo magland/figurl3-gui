@@ -93,6 +93,9 @@ const SavedFiguresTable: FunctionComponent<Props> = () => {
             const qsParts: string[] = []
             qsParts.push(`v=${figure.viewUri}`)
             qsParts.push(`d=${figure.dataUri}`)
+            if (figure.sh) {
+                qsParts.push(`s=${figure.sh}`)
+            }
             if (figure.urlState) qsParts.push(`s=${JSON.stringify(figure.urlState)}`)
             qsParts.push(`label=${figure.label}`)
             if (figure.zone) {

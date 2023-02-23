@@ -16,7 +16,7 @@ type Props = {
 }
 
 const SaveFigureDialog: FunctionComponent<Props> = ({onClose}) => {
-    const {queryString, viewUri, figureDataUri, label, zone} = useRoute2()
+    const {queryString, viewUri, figureDataUri, label, zone, sh} = useRoute2()
     // const {userId, googleIdToken} = useSignedIn()
     const {userId, accessToken} = useGithubAuth()
     const [editLabel, setEditLabel] = useState<string>(label || 'untitled')
@@ -39,6 +39,7 @@ const SaveFigureDialog: FunctionComponent<Props> = ({onClose}) => {
                 urlState,
                 label: editLabel,
                 zone,
+                sh,
                 fileManifest: getFileManifest(),
                 notes,
                 auth: {
@@ -55,7 +56,7 @@ const SaveFigureDialog: FunctionComponent<Props> = ({onClose}) => {
             }
             onClose()
         })()
-    }, [figureDataUri, editLabel, zone, queryString, userId, accessToken, onClose, viewUri, notes])
+    }, [figureDataUri, editLabel, zone, sh, queryString, userId, accessToken, onClose, viewUri, notes])
     return (
         <div style={{overflowY: 'auto'}}>
             <h1>Save figure</h1>

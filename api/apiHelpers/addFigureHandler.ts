@@ -6,7 +6,7 @@ const addFigureHandler = async (request: AddFigureRequest, verifiedUserId: strin
     if (!verifiedReCaptchaInfo) {
         throw Error('Recaptcha info is not verified')
     }
-    const {viewUri, dataUri, urlState, label, zone, fileManifest, notes, ownerId} = request
+    const {viewUri, dataUri, urlState, label, zone, sh, fileManifest, notes, ownerId} = request
     if (ownerId !== verifiedUserId) {
         throw Error('Not authorized to add figure. Incorrect owner ID.')
     }
@@ -20,6 +20,7 @@ const addFigureHandler = async (request: AddFigureRequest, verifiedUserId: strin
         urlState,
         label,
         zone,
+        sh,
         fileManifest,
         notes
     }
