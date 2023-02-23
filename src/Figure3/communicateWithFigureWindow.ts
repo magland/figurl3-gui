@@ -3,6 +3,7 @@ import { UserId } from "@figurl/interface/dist/viewInterface/kacheryTypes"
 import { FileDownloadProgressMessage, SetCurrentUserMessage } from "@figurl/interface/dist/viewInterface/MessageToChildTypes"
 import axios from "axios"
 import QueryString from 'querystring'
+import { MutableRefObject } from "react"
 import { getGitHubTokenInfoFromLocalStorage } from "../GithubAuth/getGithubAuthFromLocalStorage"
 import { localKacheryServerBaseUrl, localKacheryServerIsAvailable, localKacheryServerIsEnabled } from "../MainWindow/LocalKacheryDialog"
 import RtcshareFileSystemClient from "../Rtcshare/RtcshareDataManager/RtcshareFileSystemClient"
@@ -34,24 +35,24 @@ const communicateWithFigureWindow = (
     e: HTMLIFrameElement,
     o: {
         figureId: string,
-        figureDataUri: string,
+        figureDataUri?: string,
         kacheryGatewayUrl: string,
-        githubAuth?: {userId?: string, accessToken?: string},
+        githubAuthRef: MutableRefObject<{userId?: string, accessToken?: string} | undefined>,
         zone?: string,
         onSetUrlState: (state: {[k: string]: any}) => void,
-        verifyPermissions: (purpose: 'store-file' | 'store-github-file', params: any) => Promise<boolean>,
+        verifyPermissions: (purpose: 'store-file' | 'store-github-file' | 'store-rtcshare-file', params: any) => Promise<boolean>,
         rtcshareFileSystemClient: RtcshareFileSystemClient | undefined
     }
 ) => {
-    const {figureId, figureDataUri, kacheryGatewayUrl, githubAuth, zone, verifyPermissions, rtcshareFileSystemClient} = o
+    const {figureId, figureDataUri, kacheryGatewayUrl, githubAuthRef, zone, verifyPermissions, rtcshareFileSystemClient} = o
     const contentWindow = e.contentWindow
     if (!contentWindow) {
         console.warn('No contentWindow on iframe element')
         return
     }
     let rtcshareBaseDir: string | undefined = undefined
-    if (figureDataUri.startsWith('rtcshare://')) {
-        const aa = figureDataUri.split('/')
+    if ((figureDataUri || '').startsWith('rtcshare://')) {
+        const aa = (figureDataUri || '').split('/')
         rtcshareBaseDir = aa.slice(0, aa.length - 1).join('/')
     }
     addMessageListener(figureId, (msg: any) => {
@@ -75,6 +76,9 @@ const communicateWithFigureWindow = (
     })
     const _handleFigurlRequest = async (req: FigurlRequest): Promise<FigurlResponse | undefined> => {
         const handleStoreFileRequest = async (req: StoreFileRequest): Promise<StoreFileResponse> => {
+            if ((req.uri) && (req.uri.startsWith('rtcshare://'))) {
+                return await handleStoreRtcshareFileRequest(req)
+            }
             if (!(await verifyPermissions('store-file', {}))) {
                 return {
                     type: 'storeFile',
@@ -83,7 +87,7 @@ const communicateWithFigureWindow = (
             }
             
             const {fileData} = req
-            const uri = await kacheryCloudStoreFile(fileData, kacheryGatewayUrl, githubAuth, zone || 'default')
+            const uri = await kacheryCloudStoreFile(fileData, kacheryGatewayUrl, githubAuthRef.current, zone || 'default')
             if (!uri) throw Error('Error storing file')
             return {
                 type: 'storeFile',
@@ -146,8 +150,51 @@ const communicateWithFigureWindow = (
             }
         }
 
+        const handleStoreRtcshareFileRequest = async (req: StoreFileRequest) : Promise<StoreFileResponse> => {
+            const uri = req.uri || ''
+            if (!uri.startsWith('rtcshare://')) throw Error('Unexpected')
+            if (!(await verifyPermissions('store-rtcshare-file', {uri}))) {
+                return {
+                    type: 'storeFile',
+                    error: 'Permission not granted'
+                }
+            }
+            if (!rtcshareFileSystemClient) {
+                return {
+                    type: 'storeFile',
+                    error: 'Not connected to an rtcshare'
+                }
+            }
+            if (!githubAuthRef.current) throw Error('Not signed in with GitHub')
+            const path = uri.slice('rtcshare://'.length)
+            const fileData = (new TextEncoder()).encode(req.fileData).buffer
+            try {
+                await rtcshareFileSystemClient.writeFile(
+                    path,
+                    fileData,
+                    githubAuthRef.current
+                )
+                return {
+                    type: 'storeFile',
+                    uri
+                }
+            }
+            catch(err: any) {
+                return {
+                    type: 'storeFile',
+                    error: `Error writing file: ${err.message}`
+                }
+            }
+        }
+
         if (req.type === 'getFigureData') {
-            const a = await _loadFileFromUri(figureDataUri, undefined, undefined, () => {}, {kacheryGatewayUrl, githubAuth, zone, name: 'root', rtcshareFileSystemClient, rtcshareBaseDir})
+            if (!figureDataUri) {
+                return {
+                    type: 'getFigureData',
+                    figureData: {}
+                }
+            }
+            const a = await _loadFileFromUri(figureDataUri, undefined, undefined, () => {}, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone, name: 'root', rtcshareFileSystemClient, rtcshareBaseDir})
             if (!a) return
             const dec = new TextDecoder()
             const figureData = await deserializeReturnValue(JSON.parse(dec.decode(a.arrayBuffer)))
@@ -166,7 +213,7 @@ const communicateWithFigureWindow = (
                 }
                 contentWindow.postMessage(mm, '*')
             }
-            const a = await _loadFileFromUri(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth, zone, rtcshareFileSystemClient, rtcshareBaseDir})
+            const a = await _loadFileFromUri(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone, rtcshareFileSystemClient, rtcshareBaseDir})
             if (!a) {
                 return {
                     type: 'getFileData',
@@ -200,7 +247,7 @@ const communicateWithFigureWindow = (
             }
         }
         else if (req.type === 'getFileDataUrl') {
-            const aa = await _getFileUrlFromUri(req.uri, {kacheryGatewayUrl, githubAuth, zone})
+            const aa = await _getFileUrlFromUri(req.uri, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone})
             if (!aa) return {
                 type: 'getFileDataUrl',
                 errorMessage: `Unable to get file URL from URI: ${req.uri}`
@@ -225,15 +272,33 @@ const communicateWithFigureWindow = (
     }
     let canceled = false
     ; (async () => {
-        // important to do this multiple times because the window might not be loaded right from the outset
-        // in the future we can handle this differently by sending it immediately after receiving the first message from the child window
-        for (let i = 0; i < 5; i++) {
-            if (canceled) return
+        const postGithubUserMessage = () => {
+            const githubAuth = githubAuthRef.current
             const msg: SetCurrentUserMessage = {
                 type: 'setCurrentUser',
                 userId: githubAuth && githubAuth.userId ? githubAuth.userId as any as UserId : undefined
             }
             contentWindow.postMessage(msg, '*')
+        }
+
+        // important to do this multiple times because the window might not be loaded right from the outset
+        // in the future we can handle this differently by sending it immediately after receiving the first message from the child window
+        for (let i = 0; i < 5; i++) {
+            if (canceled) return
+            postGithubUserMessage()
+            await sleepMsec(1000)
+        }
+
+        // then we also need to send any updates (this is worse than desired)
+        let lastGithubAuth = githubAuthRef.current
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            if (canceled) return
+            if (githubAuthRef.current !== lastGithubAuth) {
+                console.info('GitHub user changed, posting message to child window')
+                postGithubUserMessage()
+                lastGithubAuth = githubAuthRef.current
+            }
             await sleepMsec(1000)
         }
     })()

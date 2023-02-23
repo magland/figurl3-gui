@@ -1,5 +1,6 @@
+import { arrayBufferToBase64 } from "../../Figure3/storeGithubFile"
 import postApiRequest from "../postApiRequest"
-import { isReadDirResponse, isReadFileResponse, ReadDirRequest, ReadFileRequest, RtcshareDir, RtcshareFile } from "../RtcshareRequest"
+import { isReadDirResponse, isReadFileResponse, isWriteFileResponse, ReadDirRequest, ReadFileRequest, RtcshareDir, RtcshareFile, WriteFileRequest } from "../RtcshareRequest"
 
 class RtcshareFileSystemClient {
     #rootDir?: RtcshareDir
@@ -70,6 +71,31 @@ class RtcshareFileSystemClient {
             return binaryPayload
         }
 
+    }
+    async writeFile(path: string, fileData: ArrayBuffer, githubAuth: {userId?: string, accessToken?: string}) {
+        if ((!githubAuth.userId) || (!githubAuth.accessToken)) {
+            throw Error('Not logged in to GitHub')
+        }
+        const aa = path.split('/')
+        const parentPath = aa.slice(0, aa.length - 1).join('/')
+        const fileName = aa[aa.length - 1]
+        const dir = await this.readDir(parentPath)
+        const ff = dir.files.find(x => (x.name === fileName))
+
+        // invalidate the content
+        if (ff) ff.content = undefined
+
+        const req: WriteFileRequest = {
+            type: 'writeFileRequest',
+            path,
+            fileDataBase64: arrayBufferToBase64(fileData),
+            githubAuth
+        }
+        const {response: resp} = await postApiRequest(req)
+        if (!isWriteFileResponse(resp)) {
+            console.warn(resp)
+            throw Error('Unexpected writeFile response')
+        }
     }
     async _retrieveDir(path: string): Promise<{dirs: RtcshareDir[], files: RtcshareFile[]}> {
         const req: ReadDirRequest = {

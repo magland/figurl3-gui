@@ -87,14 +87,14 @@ export const isGetFileDataUrlResponse = (x: any): x is GetFileDataUrlResponse =>
 export type StoreFileRequest = {
     type: 'storeFile'
     fileData: string
-    jotId?: string
+    uri?: string
 }
 
 export const isStoreFileRequest = (x: any): x is StoreFileRequest => {
     return validateObject(x, {
         type: isEqualTo('storeFile'),
         fileData: isString,
-        jotId: optional(isString)
+        uri: optional(isString)
     })
 }
 

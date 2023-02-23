@@ -11,9 +11,9 @@ type Props = {
     authorizedPermissionsRef: MutableRefObject<{[k: string]: boolean | undefined}>
 }
 
-const GitHubPermissionsWindow: FunctionComponent<Props> = ({onClose, params, authorizedPermissionsRef}) => {
+const RtcsharePermissionsWindow: FunctionComponent<Props> = ({onClose, params, authorizedPermissionsRef}) => {
     const {signedIn} = useGithubAuth()
-    const purpose = 'store-github-file'
+    const purpose = 'store-rtcshare-file'
     const k = useMemo(() => (`${purpose}.${JSONStringifyDeterministic(params)}`), [params])
     useEffect(() => {
         authorizedPermissionsRef.current[k] = undefined
@@ -34,7 +34,7 @@ const GitHubPermissionsWindow: FunctionComponent<Props> = ({onClose, params, aut
 
     return (
         <div>
-            <h3>This application is requesting to create or update the following file on GitHub on your behalf.</h3>
+            <h3>This application is requesting to create or update the following file on the connected rtcshare on your behalf. Your github access token will be shared, so you should only do this if you trust the owner of the connected rtcshare.</h3>
             <h3>{params.uri}</h3>
             {
                 signedIn ? (
@@ -58,4 +58,4 @@ const GitHubPermissionsWindow: FunctionComponent<Props> = ({onClose, params, aut
     )
 }
 
-export default GitHubPermissionsWindow
+export default RtcsharePermissionsWindow

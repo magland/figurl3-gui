@@ -13,6 +13,7 @@ import communicateWithFigureWindow from "./communicateWithFigureWindow";
 import getZoneInfo from "./getZoneInfo";
 import GitHubPermissionsWindow from './GitHubPermissionsWindow';
 import PermissionsWindow from './PermissionsWindow';
+import RtcsharePermissionsWindow from './RtcsharePermissionsWindow';
 import sleepMsec from './sleepMsec';
 
 type Props = {
@@ -63,14 +64,14 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
     }, [navigate])
 
     const authorizedPermissionsRef = useRef<{[k: string]: boolean | undefined}>({})
-    const [authorizePermissionsData, setAuthorizePermissionsData] = useState<{purpose: 'store-file' | 'store-github-file', params: any}>()
-    const onRequestPermissions = useCallback((purpose: 'store-file' | 'store-github-file', params: any) => {
+    const [authorizePermissionsData, setAuthorizePermissionsData] = useState<{purpose: 'store-file' | 'store-github-file' | 'store-rtcshare-file', params: any}>()
+    const onRequestPermissions = useCallback((purpose: 'store-file' | 'store-github-file' | 'store-rtcshare-file', params: any) => {
         setAuthorizePermissionsData({purpose, params})
         openAuthorizePermissionsWindow()
     }, [setAuthorizePermissionsData, openAuthorizePermissionsWindow])
 
     const verifyPermissions = useMemo(() => {
-        return async (purpose: 'store-file' | 'store-github-file', params: any): Promise<boolean> => {
+        return async (purpose: 'store-file' | 'store-github-file' | 'store-rtcshare-file', params: any): Promise<boolean> => {
             const k = `${purpose}.${JSONStringifyDeterministic(params)}`
             if (authorizedPermissionsRef.current[k] === true) return true
             authorizedPermissionsRef.current[k] = undefined
@@ -99,12 +100,13 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
 
     const {client: rtcshareFileSystemClient} = useRtcshare()
 
+    const githubAuthRef = useRef<{userId?: string, accessToken?: string} | undefined>()
+    useEffect(() => {
+        githubAuthRef.current = githubAuth
+    }, [githubAuth])
+
     useEffect(() => {
         // if (iframeElement.current) return // already set
-        if (!figureDataUri) {
-            console.warn('No data URI')
-            return
-        }
         if (!iframeElement) return
         if (!kacheryGatewayUrl) return
         if ((!rtcshareFileSystemClient) && (serviceBaseUrl)) return
@@ -114,7 +116,7 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
                 figureId,
                 figureDataUri,
                 kacheryGatewayUrl,
-                githubAuth,
+                githubAuthRef,
                 zone,
                 onSetUrlState,
                 verifyPermissions,
@@ -123,7 +125,7 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
         )
         iframeElement.src = src
         return cancel
-    }, [iframeElement, figureDataUri, figureId, kacheryGatewayUrl, zone, onSetUrlState, verifyPermissions, src, githubAuth, rtcshareFileSystemClient])
+    }, [iframeElement, figureDataUri, figureId, kacheryGatewayUrl, zone, onSetUrlState, verifyPermissions, src, rtcshareFileSystemClient])
 
     return (
         <div style={{position: 'absolute', width, height, overflow: 'hidden'}}>
@@ -148,6 +150,16 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
                 onClose={undefined}
             >
                 <GitHubPermissionsWindow
+                    onClose={closeAuthorizePermissionsWindow}
+                    params={authorizePermissionsData?.params || {}}
+                    authorizedPermissionsRef={authorizedPermissionsRef}
+                />
+            </ModalWindow>
+            <ModalWindow
+                open={authorizePermissionsWindowVisible && (authorizePermissionsData?.purpose === 'store-rtcshare-file')}
+                onClose={undefined}
+            >
+                <RtcsharePermissionsWindow
                     onClose={closeAuthorizePermissionsWindow}
                     params={authorizePermissionsData?.params || {}}
                     authorizedPermissionsRef={authorizedPermissionsRef}
