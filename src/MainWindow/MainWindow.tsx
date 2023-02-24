@@ -25,7 +25,7 @@ const MainWindow: FunctionComponent<Props> = ({hideApplicationBar}) => {
                 applicationBarHeight={applicationBarHeight}
                 title={label || ''}
             />
-            <div>
+            <div style={{position: 'absolute', top: applicationBarHeight, width, height: height - applicationBarHeight, overflow: 'auto'}}>
                 <Routes
                     width={width}
                     height={height - applicationBarHeight}
