@@ -343,7 +343,7 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
         const {url, size, foundLocally, sha1} = aa
         const headers: HeadersInit = {}
         if ((startByte !== undefined) && (endByte !== undefined)) {
-            headers['range'] = `bytes ${startByte}-${endByte - 1}`
+            headers['Range'] = `bytes=${startByte}-${endByte - 1}` // apparently if "=" is not used, cloudflare struggles (gives CORS error)
         }
         const rr = await fetch(
             url,
@@ -352,8 +352,8 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
                 headers
             }
         )
-        if (rr.status !== 200) {
-            throw Error(`Error getting file (${await rr.text()}): ${url}`)
+        if ((rr.status !== 200) && (rr.status !== 206)) { // 206 status is for range header
+            throw Error(`Error getting file (${rr.status}) (${await rr.text()}): ${url}`)
         }
         if (!rr.body) {
             throw Error(`No body in get response: ${url}`)
