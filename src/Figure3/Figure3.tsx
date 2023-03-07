@@ -21,10 +21,23 @@ type Props = {
     height: number
 }
 
+function parseQuery(queryString: string) {
+    const ind = queryString.indexOf('?')
+    if (ind <0) return {}
+    const query: {[k: string]: string} = {};
+    const pairs = queryString.slice(ind + 1).split('&');
+    for (let i = 0; i < pairs.length; i++) {
+        const pair = pairs[i].split('=');
+        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+    }
+    return query;
+}
+
+// Important to do it this way because it is difficult to handle special characters (especially #) by using URLSearchParams or window.location.search
+const queryParams = parseQuery(window.location.href)
+
 const Figure3: FunctionComponent<Props> = ({width, height}) => {
     const {viewUrl, figureDataUri, zone} = useRoute2()
-    const qs = window.location.search.slice(1)
-    const query = useMemo(() => (QueryString.parse(qs)), [qs]);
 
     const {visible: authorizePermissionsWindowVisible, handleOpen: openAuthorizePermissionsWindow, handleClose: closeAuthorizePermissionsWindow} = useModalDialog()
 
@@ -91,8 +104,8 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
         if (!viewUrl) return ''
         const parentOrigin = window.location.protocol + '//' + window.location.host
         let src = `${viewUrl}?parentOrigin=${parentOrigin}&figureId=${figureId}`
-        if (query.s) {
-            src += `&s=${query.s}`
+        if (queryParams.s) {
+            src += `&s=${encodeURIComponent(queryParams.s)}`
         }
         return src
     // eslint-disable-next-line react-hooks/exhaustive-deps

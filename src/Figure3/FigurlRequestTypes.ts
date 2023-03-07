@@ -166,6 +166,36 @@ export const isSetUrlStateResponse = (x: any): x is SetUrlStateResponse => {
     })
 }
 
+// serviceQuery
+
+export type ServiceQueryRequest = {
+    type: 'serviceQuery'
+    serviceName: string
+    query: any
+}
+
+export const isServiceQueryRequest = (x: any): x is ServiceQueryRequest => {
+    return validateObject(x, {
+        type: isEqualTo('serviceQuery'),
+        serviceName: isString,
+        query: () => (true)
+    })
+}
+
+export type ServiceQueryResponse = {
+    type: 'serviceQuery'
+    result?: any
+    errorMessage?: string
+}
+
+export const isServiceQueryResponse = (x: any): x is ServiceQueryResponse => {
+    return validateObject(x, {
+        type: isEqualTo('serviceQuery'),
+        result: optional(() => (true)),
+        errorMessage: optional(isString)
+    })
+}
+
 //////////////////////////////////////////////////////////////
 
 export type FigurlRequest =
@@ -174,7 +204,8 @@ export type FigurlRequest =
     GetFileDataUrlRequest |
     StoreFileRequest |
     StoreGithubFileRequest |
-    SetUrlStateRequest
+    SetUrlStateRequest |
+    ServiceQueryRequest
 
 export const isFigurlRequest = (x: any): x is FigurlRequest => {
     return isOneOf([
@@ -183,7 +214,8 @@ export const isFigurlRequest = (x: any): x is FigurlRequest => {
         isGetFileDataUrlRequest,
         isStoreFileRequest,
         isStoreGithubFileRequest,
-        isSetUrlStateRequest
+        isSetUrlStateRequest,
+        isServiceQueryRequest
     ])(x)
 }
 
@@ -193,7 +225,8 @@ export type FigurlResponse =
     GetFileDataUrlResponse |
     StoreFileResponse |
     StoreGithubFileResponse |
-    SetUrlStateResponse
+    SetUrlStateResponse |
+    ServiceQueryResponse
 
 export const isFigurlResponse = (x: any): x is FigurlResponse => {
     return isOneOf([
@@ -202,6 +235,7 @@ export const isFigurlResponse = (x: any): x is FigurlResponse => {
         isGetFileDataUrlResponse,
         isStoreFileResponse,
         isStoreGithubFileResponse,
-        isSetUrlStateResponse
+        isSetUrlStateResponse,
+        isServiceQueryResponse
     ])(x)
 }

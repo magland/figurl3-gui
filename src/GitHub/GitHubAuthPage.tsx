@@ -2,13 +2,27 @@ import axios from "axios";
 import { FunctionComponent, useEffect, useState } from "react";
 import { setGitHubTokenInfoToLocalStorage } from "../GithubAuth/getGithubAuthFromLocalStorage";
 
-type Props ={
+type Props = any
+
+function parseQuery(queryString: string) {
+    const ind = queryString.indexOf('?')
+    if (ind <0) return {}
+    const query: {[k: string]: string} = {};
+    const pairs = queryString.slice(ind + 1).split('&');
+    for (let i = 0; i < pairs.length; i++) {
+        const pair = pairs[i].split('=');
+        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+    }
+    return query;
 }
+
+// Important to do it this way because it is difficult to handle special characters (especially #) by using URLSearchParams or window.location.search
+const queryParams = parseQuery(window.location.href)
 
 const GitHubAuthPage: FunctionComponent<Props> = () => {
 	const [status, setStatus] = useState<'checking' | 'okay' | 'error'>('checking')
 	const [error, setError] = useState<string>('')
-	const code = getQueryVariable('code')
+	const code = queryParams.code
 	useEffect(() => {
 		;(async () => {
 			const resp = await axios.get(`/api/githubAuth?code=${code}`, {responseType: 'json'})
@@ -40,17 +54,6 @@ const GitHubAuthPage: FunctionComponent<Props> = () => {
 			}
 		</div>
 	)
-}
-
-function getQueryVariable(variable: string) {
-	var query = window.location.search.substring(1)
-	var vars = query.split('&')
-	for (var i = 0; i < vars.length; i++) {
-		var pair = vars[i].split('=')
-		if (decodeURIComponent(pair[0]) === variable) {
-			return decodeURIComponent(pair[1])
-		}
-	}
 }
 
 export default GitHubAuthPage
