@@ -1,4 +1,4 @@
-import { FigurlRequest, FigurlResponse, isFigurlRequest, StoreGithubFileResponse as StoreGithubFileResponseFigurl } from "@figurl/interface/dist/viewInterface/FigurlRequestTypes"
+import { FigurlRequest, FigurlResponse, isFigurlRequest, RDDir, StoreGithubFileResponse as StoreGithubFileResponseFigurl } from "@figurl/interface/dist/viewInterface/FigurlRequestTypes"
 import { UserId } from "@figurl/interface/dist/viewInterface/kacheryTypes"
 import { FileDownloadProgressMessage, SetCurrentUserMessage } from "@figurl/interface/dist/viewInterface/MessageToChildTypes"
 import axios from "axios"
@@ -9,12 +9,13 @@ import { localKacheryServerBaseUrl, localKacheryServerIsAvailable, localKacheryS
 import RtcshareFileSystemClient from "../Rtcshare/RtcshareDataManager/RtcshareFileSystemClient"
 import { signMessage } from "./crypto/signatures"
 import deserializeReturnValue from "./deserializeReturnValue"
-import { StoreFileRequest, StoreFileResponse, StoreGithubFileRequest, StoreGithubFileResponse } from "./FigurlRequestTypes"
+import { StoreFileRequest, StoreFileResponse, StoreGithubFileRequest, StoreGithubFileResponse } from "@figurl/interface/dist/viewInterface/FigurlRequestTypes"
 import { FindFileRequest, isFindFileResponse } from "./GatewayRequest"
 import { getKacheryCloudClientInfo } from "./getKacheryCloudClientInfo"
 import kacheryCloudStoreFile from "./kacheryCloudStoreFile"
 import sleepMsec from "./sleepMsec"
 import storeGithubFile, { loadGitHubFileDataFromUri, parseGitHubFileUri } from "./storeGithubFile"
+import { RtcshareDir } from "../Rtcshare/RtcshareRequest"
 
 const messageListeners: {[figureId: string]: (msg: any) => void} = {}
 
@@ -268,6 +269,35 @@ const communicateWithFigureWindow = (
         }
         else if (req.type === 'storeGithubFile') {
             return await handleStoreGithubFileRequest(req)
+        }
+        else if (req.type === 'readDir') {
+            let {uri} = req
+            if (uri.startsWith('$dir/')) {
+                if (!rtcshareBaseDir) {
+                    throw Error('No rtcshare base dir.')
+                }
+                uri = rtcshareBaseDir + '/' + uri.slice('$dir/'.length)
+            }
+            if (uri.startsWith('rtcshare://')) {
+                if (!rtcshareFileSystemClient) {
+                    throw Error('No rtcshare client')
+                }
+                const ppath = uri.slice('rtcshare://'.length)
+                const dir = await rtcshareFileSystemClient.readDir(ppath)
+                const convertDir = (dir1: RtcshareDir): RDDir => {
+                    return {
+                        files: (dir1.files || []).map(f => ({name: f.name, size: f.size, mtime: f.mtime})),
+                        dirs: (dir1.dirs || []).map(d => (convertDir(d)))
+                    }
+                }
+                return {
+                    type: 'readDir',
+                    dir: convertDir(dir)
+                }
+            }
+            else {
+                throw Error(`Unexpected data URI: ${uri}`)
+            }
         }
     }
     let canceled = false
