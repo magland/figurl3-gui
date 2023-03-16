@@ -7,6 +7,7 @@ export type RtcshareData = {
     connectedToService?: boolean
     webrtcConnectionStatus?: 'unused' | 'pending' | 'connected' | 'error'
     usingProxy?: boolean
+    rtcshareBaseDir?: string
 }
 
 export const initialRtcshareData: RtcshareData = {

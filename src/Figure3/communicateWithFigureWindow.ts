@@ -42,7 +42,8 @@ const communicateWithFigureWindow = (
         zone?: string,
         onSetUrlState: (state: {[k: string]: any}) => void,
         verifyPermissions: (purpose: 'store-file' | 'store-github-file' | 'store-rtcshare-file', params: any) => Promise<boolean>,
-        rtcshareFileSystemClient: RtcshareFileSystemClient | undefined
+        rtcshareFileSystemClient: RtcshareFileSystemClient | undefined,
+        rtcshareBaseDir?: string
     }
 ) => {
     const {figureId, figureDataUri, kacheryGatewayUrl, githubAuthRef, zone, verifyPermissions, rtcshareFileSystemClient} = o
@@ -52,7 +53,10 @@ const communicateWithFigureWindow = (
         return
     }
     let rtcshareBaseDir: string | undefined = undefined
-    if ((figureDataUri || '').startsWith('rtcshare://')) {
+    if (o.rtcshareBaseDir) {
+        rtcshareBaseDir = o.rtcshareBaseDir
+    }
+    else if ((figureDataUri || '').startsWith('rtcshare://')) {
         const aa = (figureDataUri || '').split('/')
         rtcshareBaseDir = aa.slice(0, aa.length - 1).join('/')
     }

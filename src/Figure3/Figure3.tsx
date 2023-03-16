@@ -37,7 +37,7 @@ function parseQuery(queryString: string) {
 const queryParams = parseQuery(window.location.href)
 
 const Figure3: FunctionComponent<Props> = ({width, height}) => {
-    const {viewUrl, figureDataUri, zone} = useRoute2()
+    const {viewUrl, figureDataUri, zone, dir} = useRoute2()
 
     const {visible: authorizePermissionsWindowVisible, handleOpen: openAuthorizePermissionsWindow, handleClose: closeAuthorizePermissionsWindow} = useModalDialog()
 
@@ -133,12 +133,13 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
                 zone,
                 onSetUrlState,
                 verifyPermissions,
-                rtcshareFileSystemClient
+                rtcshareFileSystemClient,
+                rtcshareBaseDir: dir?.startsWith('rtcshare://') ? dir : undefined
             }
         )
         iframeElement.src = src
         return cancel
-    }, [iframeElement, figureDataUri, figureId, kacheryGatewayUrl, zone, onSetUrlState, verifyPermissions, src, rtcshareFileSystemClient])
+    }, [iframeElement, figureDataUri, figureId, kacheryGatewayUrl, zone, onSetUrlState, verifyPermissions, src, rtcshareFileSystemClient, dir])
 
     return (
         <div style={{position: 'absolute', width, height, overflow: 'hidden'}}>

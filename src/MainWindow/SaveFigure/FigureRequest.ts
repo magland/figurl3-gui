@@ -26,6 +26,7 @@ export type Figure = {
     label: string
     zone?: string
     sh?: string
+    dir?: string
     fileManifest: {uri: string, name?: string, size?: number}[]
     notes: string
 }
@@ -41,6 +42,7 @@ export const isFigure = (y: any): y is Figure => {
         label: isString,
         zone: optional(isString),
         sh: optional(isString),
+        dir: optional(isString),
         fileManifest: isArrayOf(y => validateObject(y, {
             uri: isString,
             name: optional(isString),
@@ -61,6 +63,7 @@ export type AddFigureRequest = {
     label: string
     zone?: string
     sh?: string
+    dir?: string
     fileManifest: {uri: string, name?: string, size?: number}[]
     notes: string
     auth: Auth
@@ -76,6 +79,7 @@ export const isAddFigureRequest = (x: any): x is AddFigureRequest => {
         label: isString,
         zone: optional(isString),
         sh: optional(isString),
+        dir: optional(isString),
         fileManifest: isArrayOf(y => validateObject(y, {
             uri: isString,
             name: optional(isString),

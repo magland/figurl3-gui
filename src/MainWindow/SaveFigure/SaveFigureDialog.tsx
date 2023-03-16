@@ -16,7 +16,7 @@ type Props = {
 }
 
 const SaveFigureDialog: FunctionComponent<Props> = ({onClose}) => {
-    const {queryString, viewUri, figureDataUri, label, zone, sh} = useRoute2()
+    const {queryString, viewUri, figureDataUri, label, zone, sh, dir} = useRoute2()
     // const {userId, googleIdToken} = useSignedIn()
     const {userId, accessToken} = useGithubAuth()
     const [editLabel, setEditLabel] = useState<string>(label || 'untitled')
@@ -40,6 +40,7 @@ const SaveFigureDialog: FunctionComponent<Props> = ({onClose}) => {
                 label: editLabel,
                 zone,
                 sh,
+                dir,
                 fileManifest: getFileManifest(),
                 notes,
                 auth: {

@@ -26,6 +26,7 @@ export const useRoute2 = () => {
     const label = query.label ? query.label as any as string : ''
     const zone: string | undefined = query.zone ? query.zone as any as string : undefined
     const sh: string | undefined = query.sh ? query.sh as any as string : undefined
+    const dir: string | undefined = query.dir ? query.dir as any as string : undefined
 
     const setRoute = useCallback((o: {routePath?: RoutePath, dataUri?: string, label?: string}) => {
         // const query2 = {...query}
@@ -44,7 +45,7 @@ export const useRoute2 = () => {
         navigate({...location, pathname: pathname2, search: search2})
     }, [location, navigate])
 
-    return {url, routePath, setRoute, queryString: qs, viewUri, viewUrl, viewUrlBase, figureDataUri, label, zone, sh}
+    return {url, routePath, setRoute, queryString: qs, viewUri, viewUrl, viewUrlBase, figureDataUri, label, zone, sh, dir}
 }
 
 const queryString = (params: { [key: string]: string | string[] }) => {

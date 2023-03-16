@@ -9,6 +9,7 @@ export const useRtcshare = () => {
         connectedToService: data.connectedToService,
         webrtcConnectionStatus: data.webrtcConnectionStatus,
         usingProxy: data.usingProxy,
+        rtcshareBaseDir: data.rtcshareBaseDir,
         checkConnectionStatus
     }
 }
