@@ -290,6 +290,7 @@ const communicateWithFigureWindow = (
                 const dir = await rtcshareFileSystemClient.readDir(ppath)
                 const convertDir = (dir1: RtcshareDir): RDDir => {
                     return {
+                        name: dir1.name,
                         files: (dir1.files || []).map(f => ({name: f.name, size: f.size, mtime: f.mtime})),
                         dirs: (dir1.dirs || []).map(d => (convertDir(d)))
                     }
