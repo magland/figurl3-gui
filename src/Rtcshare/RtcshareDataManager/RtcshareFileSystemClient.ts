@@ -1,6 +1,6 @@
 import { arrayBufferToBase64 } from "../../Figure3/storeGithubFile"
 import postApiRequest from "../postApiRequest"
-import { isReadDirResponse, isReadFileResponse, isWriteFileResponse, ReadDirRequest, ReadFileRequest, RtcshareDir, RtcshareFile, WriteFileRequest } from "../RtcshareRequest"
+import { isReadDirResponse, isReadFileResponse, isServiceQueryResponse, isWriteFileResponse, ReadDirRequest, ReadFileRequest, RtcshareDir, RtcshareFile, ServiceQueryRequest, WriteFileRequest } from "../RtcshareRequest"
 
 class RtcshareFileSystemClient {
     #rootDir?: RtcshareDir
@@ -70,7 +70,6 @@ class RtcshareFileSystemClient {
             }
             return binaryPayload
         }
-
     }
     async writeFile(path: string, fileData: ArrayBuffer, githubAuth: {userId?: string, accessToken?: string}) {
         if ((!githubAuth.userId) || (!githubAuth.accessToken)) {
@@ -96,6 +95,19 @@ class RtcshareFileSystemClient {
             console.warn(resp)
             throw Error('Unexpected writeFile response')
         }
+    }
+    async serviceQuery(serviceName: string, query: any) {
+        const req: ServiceQueryRequest = {
+            type: 'serviceQueryRequest',
+            serviceName,
+            query
+        }
+        const {response: resp, binaryPayload} = await postApiRequest(req)
+        if (!isServiceQueryResponse(resp)) {
+            console.warn(resp)
+            throw Error('Unexpected serviceQuery response')
+        }
+        return {result: resp.result, binaryPayload}
     }
     async _retrieveDir(path: string): Promise<{dirs: RtcshareDir[], files: RtcshareFile[]}> {
         const req: ReadDirRequest = {

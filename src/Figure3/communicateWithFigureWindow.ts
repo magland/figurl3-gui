@@ -276,7 +276,13 @@ const communicateWithFigureWindow = (
         }
         else if (req.type === 'readDir') {
             let {uri} = req
-            if (uri.startsWith('$dir/')) {
+            if (uri === '$dir') {
+                if (!rtcshareBaseDir) {
+                    throw Error('No rtcshare base dir.')
+                }
+                uri = rtcshareBaseDir
+            }
+            else if (uri.startsWith('$dir/')) {
                 if (!rtcshareBaseDir) {
                     throw Error('No rtcshare base dir.')
                 }
@@ -302,6 +308,25 @@ const communicateWithFigureWindow = (
             }
             else {
                 throw Error(`Unexpected data URI: ${uri}`)
+            }
+        }
+        else if (req.type === 'serviceQuery') {
+            if (!rtcshareFileSystemClient) {
+                throw Error('No rtcshare client')
+            }
+            try {
+                const {result, binaryPayload} = await rtcshareFileSystemClient.serviceQuery(req.serviceName, req.query)
+                return {
+                    type: 'serviceQuery',
+                    result,
+                    binaryPayload
+                }
+            }
+            catch(err: any) {
+                return {
+                    type: 'serviceQuery',
+                    errorMessage: err.message
+                }
             }
         }
     }
@@ -363,6 +388,12 @@ const _getFileUrlFromUri = async (uri: string, o: {kacheryGatewayUrl: string, gi
 }
 
 const _loadFileFromUri = async (uri: string, startByte: number | undefined, endByte: number | undefined, onProgress: (a: {loaded: number, total: number}) => void, o: {kacheryGatewayUrl: string, githubAuth?: {userId?: string, accessToken?: string}, zone?: string, name?: string, rtcshareFileSystemClient: RtcshareFileSystemClient | undefined, rtcshareBaseDir?: string}): Promise<{arrayBuffer: ArrayBuffer, size?: number, foundLocally: boolean} | undefined> => {
+    if (uri === '$dir') {
+        if (!o.rtcshareBaseDir) {
+            throw Error('No rtcshare base dir.')
+        }
+        uri = o.rtcshareBaseDir
+    }
     if (uri.startsWith('$dir/')) {
         if (!o.rtcshareBaseDir) {
             throw Error('No rtcshare base dir.')

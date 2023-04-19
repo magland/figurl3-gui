@@ -1483,9 +1483,9 @@
     object-hash "^3.0.0"
 
 "@figurl/interface@^0.2.0":
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/@figurl/interface/-/interface-0.2.3.tgz#f6e9fa76da5723cf38788661be1108890d66255c"
-  integrity sha512-FF0xQtD3rLIil0CTzeTKouSDjnyxBFyJYyBC9TzsAbZX9Wm8F1Djbv8vcpOmmtB9OAan4g66Vtyf2teaa15yow==
+  version "0.2.4"
+  resolved "https://registry.yarnpkg.com/@figurl/interface/-/interface-0.2.4.tgz#6d2da7f40c1bcf9f011eb72fac41bb83fad8316b"
+  integrity sha512-dIU/0sHBh8gXojPRW+f65Ze+PYtgZr8VsIt3yX4A2jkQ8D5fZgfG8Hj0LF0bvaouvodhcILFEItiC0CDvgUGCw==
   dependencies:
     "@figurl/core-utils" "^0.1"
     "@types/node" "^18.7.18"

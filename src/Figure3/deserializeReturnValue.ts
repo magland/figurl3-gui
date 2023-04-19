@@ -13,7 +13,15 @@ async function deserializeReturnValue(x: any): Promise<any> {
         else if (x._type === 'ndarray') {
             const shape = x.shape
             const dtype = x.dtype
-            let dataBuffer
+            if (!shape) {
+                console.warn(x)
+                throw Error('deserializeReturnValue: Missing shape in _ndarray')
+            }
+            if (!dtype) {
+                console.warn(x)
+                throw Error('deserializeReturnValue: Missing dtype in _ndarray')
+            }
+            let dataBuffer: ArrayBuffer
             if (x.data_b64) {
                 const data_b64 = x.data_b64
                 dataBuffer = _base64ToArrayBuffer(data_b64)
@@ -23,37 +31,37 @@ async function deserializeReturnValue(x: any): Promise<any> {
                 const data_gzip_b64 = x.data_gzip_b64
                 const aa = _base64ToArrayBuffer(data_gzip_b64)
                 // const aa = Buffer.from(data_gzip_b64, 'base64')
-                dataBuffer = gunzip(aa)
+                dataBuffer = gunzip(new Uint8Array(aa))
             }
             else {
-                throw Error('Missing data_b64 or data_gzip_b64')
+                dataBuffer = new ArrayBuffer(0)
             }
             if (!dataBuffer) throw Error('No dataBuffer')
             // const data_b64 = x.data_b64 as string
             // const dataBuffer = _base64ToArrayBuffer(data_b64)
             if (dtype === 'float32') {
-                return applyShape(new Float32Array(dataBuffer.buffer), shape)
+                return applyShape(new Float32Array(dataBuffer), shape)
             }
             else if (dtype === 'int32') {
-                return applyShape(new Int32Array(dataBuffer.buffer), shape)
+                return applyShape(new Int32Array(dataBuffer), shape)
             }
             else if (dtype === 'int16') {
-                return applyShape(new Int16Array(dataBuffer.buffer), shape)
+                return applyShape(new Int16Array(dataBuffer), shape)
             }
             else if (dtype === 'uint8') {
-                return applyShape(new Uint8Array(dataBuffer.buffer), shape)
+                return applyShape(new Uint8Array(dataBuffer), shape)
             }
             else if (dtype === 'uint32') {
-                return applyShape(new Uint32Array(dataBuffer.buffer), shape)
+                return applyShape(new Uint32Array(dataBuffer), shape)
             }
             else if (dtype === 'uint16') {
-                return applyShape(new Uint16Array(dataBuffer.buffer), shape)
+                return applyShape(new Uint16Array(dataBuffer), shape)
             }
             else if (dtype === 'float64') {
                 if (shapeProduct(shape) > 100) {
                     console.info('WARNING: Using float64 array. It may be a good idea to cast the array to float32 if you do not need the full precision', shape)
                 }
-                return applyShape(new Float64Array(dataBuffer.buffer), shape)
+                return applyShape(new Float64Array(dataBuffer), shape)
             }
             else {
                 throw Error(`Datatype not yet implemented for ndarray: ${dtype}`)
@@ -75,7 +83,7 @@ function _base64ToArrayBuffer(base64: string) {
     for (let i = 0; i < binary_string.length; i++) {
         bytes[i] = binary_string.charCodeAt(i)
     }
-    return bytes
+    return bytes.buffer
 }
 function shapeProduct(shape: number[]) {
     let ret = 1
@@ -83,7 +91,7 @@ function shapeProduct(shape: number[]) {
     return ret
 }
 function gunzip(x: Uint8Array) {
-    return pako.inflate(x)
+    return pako.inflate(x).buffer
 }
 function applyShape(x: any, shape: number[]) {
     if (shape.length === 1) {
