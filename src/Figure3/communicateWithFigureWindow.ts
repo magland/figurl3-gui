@@ -315,7 +315,7 @@ const communicateWithFigureWindow = (
                 throw Error('No rtcshare client')
             }
             try {
-                const {result, binaryPayload} = await rtcshareFileSystemClient.serviceQuery(req.serviceName, req.query)
+                const {result, binaryPayload} = await rtcshareFileSystemClient.serviceQuery(req.serviceName, req.query, o.rtcshareBaseDir)
                 return {
                     type: 'serviceQuery',
                     result,
