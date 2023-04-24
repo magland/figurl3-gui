@@ -286,7 +286,12 @@ const communicateWithFigureWindow = (
                 if (!rtcshareBaseDir) {
                     throw Error('No rtcshare base dir.')
                 }
-                uri = rtcshareBaseDir + '/' + uri.slice('$dir/'.length)
+                if (rtcshareBaseDir === 'rtcshare://') {
+                    uri = 'rtcshare://' + uri.slice('$dir/'.length)
+                }
+                else {
+                    uri = rtcshareBaseDir + '/' + uri.slice('$dir/'.length)
+                }
             }
             if (uri.startsWith('rtcshare://')) {
                 if (!rtcshareFileSystemClient) {
@@ -398,7 +403,12 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
         if (!o.rtcshareBaseDir) {
             throw Error('No rtcshare base dir.')
         }
-        uri = o.rtcshareBaseDir + '/' + uri.slice('$dir/'.length)
+        if (o.rtcshareBaseDir === 'rtcshare://') {
+            uri = 'rtcshare://' + uri.slice('$dir/'.length)
+        }
+        else {
+            uri = o.rtcshareBaseDir + '/' + uri.slice('$dir/'.length)
+        }
     }
     if (!requestedFileUris.includes(uri)) {
         requestedFileUris.push(uri)
