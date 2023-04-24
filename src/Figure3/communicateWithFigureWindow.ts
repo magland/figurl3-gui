@@ -478,7 +478,7 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
             throw Error('No rtcshare client')
         }
         const ppath = uri.slice('rtcshare://'.length)
-        const arrayBuffer = await o.rtcshareFileSystemClient.readFile(ppath, startByte, endByte)
+        const arrayBuffer = await o.rtcshareFileSystemClient.readFile(ppath, startByte, endByte, {forceReload: true})
         return {arrayBuffer, size: undefined, foundLocally: false}
     }
     else {

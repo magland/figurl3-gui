@@ -34,7 +34,7 @@ class RtcshareFileSystemClient {
             return {name: x.name, dirs, files}
         }
     }
-    async readFile(path: string, start?: number, end?: number): Promise<ArrayBuffer> {
+    async readFile(path: string, start?: number, end?: number, o: {forceReload?: boolean}={}): Promise<ArrayBuffer> {
         if (!path) throw Error('Path is empty')
         const aa = path.split('/')
         const parentPath = aa.slice(0, aa.length - 1).join('/')
@@ -42,7 +42,7 @@ class RtcshareFileSystemClient {
         const dir = await this.readDir(parentPath)
         const ff = dir.files.find(x => (x.name === fileName))
         if (!ff) throw Error(`File not found: ${path}`)
-        if (ff.content) {
+        if ((ff.content) && (!o.forceReload)) {
             if (start === undefined) {
                 return ff.content
             }
