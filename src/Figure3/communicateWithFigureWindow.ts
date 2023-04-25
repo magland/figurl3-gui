@@ -298,7 +298,7 @@ const communicateWithFigureWindow = (
                     throw Error('No rtcshare client')
                 }
                 const ppath = uri.slice('rtcshare://'.length)
-                const dir = await rtcshareFileSystemClient.readDir(ppath)
+                const dir = await rtcshareFileSystemClient.readDir(ppath, {forceReload: true})
                 const convertDir = (dir1: RtcshareDir): RDDir => {
                     return {
                         name: dir1.name,

@@ -5,7 +5,13 @@ import { isReadDirResponse, isReadFileResponse, isServiceQueryResponse, isWriteF
 class RtcshareFileSystemClient {
     #rootDir?: RtcshareDir
     constructor() {}
-    async readDir(path: string): Promise<RtcshareDir & {dirs: RtcshareDir[], files: RtcshareFile[]}> {
+    async readDir(path: string, o: {forceReload?: boolean}={}): Promise<RtcshareDir & {dirs: RtcshareDir[], files: RtcshareFile[]}> {
+        if (o.forceReload) {
+            const aa = path.split('/')
+            const dirName = aa.length > 0 ? aa[aa.length - 1] : ''
+            const {dirs, files} = await this._retrieveDir(path === '/' ? '' : path)
+            return {name: dirName, dirs, files}
+        }
         if ((!path) || (path === '/')) {
             const rr = this.#rootDir
             if ((rr) && (hasDirsAndFiles(rr))) {
@@ -39,7 +45,7 @@ class RtcshareFileSystemClient {
         const aa = path.split('/')
         const parentPath = aa.slice(0, aa.length - 1).join('/')
         const fileName = aa[aa.length - 1]
-        const dir = await this.readDir(parentPath)
+        const dir = await this.readDir(parentPath, {forceReload: o.forceReload})
         const ff = dir.files.find(x => (x.name === fileName))
         if (!ff) throw Error(`File not found: ${path}`)
         if ((ff.content) && (!o.forceReload)) {
