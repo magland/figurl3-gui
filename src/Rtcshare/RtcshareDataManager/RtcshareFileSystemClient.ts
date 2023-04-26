@@ -102,12 +102,15 @@ class RtcshareFileSystemClient {
             throw Error('Unexpected writeFile response')
         }
     }
-    async serviceQuery(serviceName: string, query: any, dir: string | undefined) {
+    async serviceQuery(serviceName: string, query: any, dir: string | undefined, userId: string | undefined) {
         const req: ServiceQueryRequest = {
             type: 'serviceQueryRequest',
             serviceName,
             query,
             dir
+        }
+        if (userId) {
+            req.userId = userId
         }
         const {response: resp, binaryPayload} = await postApiRequest(req)
         if (!isServiceQueryResponse(resp)) {
