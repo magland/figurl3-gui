@@ -218,7 +218,20 @@ const communicateWithFigureWindow = (
                 }
                 contentWindow.postMessage(mm, '*')
             }
-            const a = await _loadFileFromUri(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone, rtcshareFileSystemClient, rtcshareBaseDir})
+            let a: {
+                arrayBuffer: ArrayBuffer
+                size?: number
+                foundLocally: boolean
+            } | undefined
+            try {
+                a = await _loadFileFromUri(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone, rtcshareFileSystemClient, rtcshareBaseDir})
+            }
+            catch(err: any) {
+                return {
+                    type: 'getFileData',
+                    errorMessage: `Error loading file data: ${err.message}`
+                }
+            }
             if (!a) {
                 return {
                     type: 'getFileData',
