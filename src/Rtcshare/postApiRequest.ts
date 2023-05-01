@@ -3,11 +3,10 @@ import parseMessageWithBinaryPayload from "./parseMessageWithBinaryPayload"
 import { isRtcshareResponse, RtcshareRequest, RtcshareResponse } from "./RtcshareRequest"
 
 const postApiRequest = async (request: RtcshareRequest): Promise<{response: RtcshareResponse, binaryPayload: ArrayBuffer | undefined}> => {
-    if ((request.type !== 'probeRequest') && (request.type !== 'webrtcSignalingRequest')) {
-        if (!webrtcConnectionToService) {
-            throw Error('No webrtc connection to service')
+    if (webrtcConnectionToService) {
+        if ((request.type !== 'probeRequest') && (request.type !== 'webrtcSignalingRequest')) {
+            return webrtcConnectionToService.postApiRequest(request)
         }
-        return webrtcConnectionToService.postApiRequest(request)
     }
     const rr = await fetch(
         `${serviceBaseUrl}/api`,
