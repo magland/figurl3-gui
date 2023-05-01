@@ -9,11 +9,15 @@ class WebrtcConnectionToService {
     #peer: SimplePeer.Instance | undefined
     #requestCallbacks: {[requestId: string]: (response: RtcshareResponse, binaryPayload: ArrayBuffer | undefined) => void} = {}
     #status: 'pending' | 'connected' | 'error' = 'pending'
-    constructor() {
+    constructor(o: {disableWebrtc?: boolean} = {}) {
         const clientId = randomAlphaString(10)
         const peer = new SimplePeer({initiator: true})
         const incomingMultipartMessageManager = new IncomingMultipartMessageManager()
         peer.on('signal', async s => {
+            if (o.disableWebrtc) {
+                console.info('Webrtc disabled')
+                return
+            }
             const request: WebrtcSignalingRequest = {
                 type: 'webrtcSignalingRequest',
                 clientId,
@@ -56,6 +60,9 @@ class WebrtcConnectionToService {
         })
         this.#peer = peer
         ;(async () => {
+            if (o.disableWebrtc) {
+                return
+            }
             const timer = Date.now()
             while (this.#status === 'pending') {
                 const elapsed = Date.now() - timer

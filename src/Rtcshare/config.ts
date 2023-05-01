@@ -24,4 +24,6 @@ export const serviceBaseUrl = queryParams.sh ? (
     undefined
 )
 
-export const webrtcConnectionToService = serviceBaseUrl ? new WebrtcConnectionToService() : undefined
+const disableWebrtc = queryParams.nowebrtc === '1' ? true : false
+
+export const webrtcConnectionToService = serviceBaseUrl ? new WebrtcConnectionToService({disableWebrtc}) : undefined
