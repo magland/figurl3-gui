@@ -1483,9 +1483,9 @@
     object-hash "^3.0.0"
 
 "@figurl/interface@^0.2.0":
-  version "0.2.6"
-  resolved "https://registry.yarnpkg.com/@figurl/interface/-/interface-0.2.6.tgz#5ac413979b1568d40c2eb45ff6d5527617cf300e"
-  integrity sha512-UG8Mnt9ocSaDCv+rYtSlwaHhgRf+1AcQP5vPTcQSn8kk9g4MxgjQd5EKIFQbPfjoDRPOOFH17O7OehcumphWKg==
+  version "0.2.9"
+  resolved "https://registry.yarnpkg.com/@figurl/interface/-/interface-0.2.9.tgz#ce4b1261ac1e3b30c9f31f3e98c1a2063a28ae21"
+  integrity sha512-UAGHBfFurG8WeePZiPkDzA7CjTrJHFccaUArv1i4QS+7/pcIyPm7eDULcpRQeUxTxTVjSHIPbIvJN0kYymPXRg==
   dependencies:
     "@figurl/core-utils" "^0.1"
     "@types/node" "^18.7.18"
@@ -2196,9 +2196,9 @@
   integrity sha512-qelS/Ra6sacc4loe/3MSjXNL1dNQ/GjxNHVzuChwMfmk7HuycRLVQN2qNY3XahK+fZc5E2szqQSKUyAF0E+2bg==
 
 "@types/node@^18.7.18":
-  version "18.16.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.16.1.tgz#5db121e9c5352925bb1f1b892c4ae620e3526799"
-  integrity sha512-DZxSZWXxFfOlx7k7Rv4LAyiMroaxa3Ly/7OOzZO8cBNho0YzAi4qlbrx8W27JGqG57IgR/6J7r+nOJWw6kcvZA==
+  version "18.16.6"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.16.6.tgz#d0ffffe201b253989b17ea157ddabec677a4f4fe"
+  integrity sha512-N7KINmeB8IN3vRR8dhgHEp+YpWvGFcpDoh5XZ8jB5a00AdFKCKEyyGTOPTddUf4JqU1ZKTVxkOxakDvchNVI2Q==
 
 "@types/pako@^2.0.0":
   version "2.0.0"

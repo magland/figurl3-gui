@@ -1,4 +1,5 @@
 import { JSONStringifyDeterministic } from '@figurl/interface/dist/viewInterface/kacheryTypes';
+import { ReportUrlStateChangeMessage } from '@figurl/interface/dist/viewInterface/MessageToChildTypes';
 import QueryString from 'querystring';
 import { FunctionComponent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Location, useLocation, useNavigate } from "react-router-dom";
@@ -41,6 +42,8 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
 
     const {visible: authorizePermissionsWindowVisible, handleOpen: openAuthorizePermissionsWindow, handleClose: closeAuthorizePermissionsWindow} = useModalDialog()
 
+    const [iframeElement, setIframeElement] = useState<HTMLIFrameElement | null>()
+
     const location = useLocation()
     const navigate = useNavigate()
 
@@ -48,7 +51,18 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
     const locationRef = useRef<Location>()
     useEffect(() => {
         locationRef.current = location
-    }, [location])
+
+        if ((iframeElement) && (iframeElement.contentWindow)) {
+            const queryParams0 = parseQuery(location.search)
+            if (queryParams0.s) {
+                const msg: ReportUrlStateChangeMessage = {
+                    type: 'reportUrlStateChange',
+                    state: JSON.parse(queryParams0.s)
+                }   
+                iframeElement.contentWindow.postMessage(msg, '*')
+            }
+        }
+    }, [location, iframeElement])
 
     const githubAuth = useGithubAuth()
 
@@ -97,7 +111,6 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
         }
     }, [onRequestPermissions])
 
-    const [iframeElement, setIframeElement] = useState<HTMLIFrameElement | null>()
     const figureId = useMemo(() => (randomAlphaLowerString(10)), [])
 
     const src = useMemo(() => {
