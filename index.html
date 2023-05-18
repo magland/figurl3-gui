@@ -9,11 +9,13 @@
     <script>
       window.global = window
     </script>
-    <script type="module">
+    <!-- <script type="module">
       // See comment in source code (search for Octokit)
       import { Octokit } from "https://cdn.skypack.dev/octokit";
       window.Octokit = Octokit
-    </script>
+
+      // The above problem seems to have been resolved via node v18
+    </script> -->
   </head>
   <body>
     <div id="root"></div>

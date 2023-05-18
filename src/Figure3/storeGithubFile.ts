@@ -1,11 +1,15 @@
 import { getGitHubTokenInfoFromLocalStorage } from "../GithubAuth/getGithubAuthFromLocalStorage"
 
-// Was having a lot of trouble importing from npm package
-// Was getting message "Failed to resolve entry for package "@octokit/plugin-retry". The package may have incorrect main/module/exports specified in its package.json."
-// This wasn't happening for CRA (only Vite)
-// So loaded it in index.html and stored in in window.Octokit
-// import { Octokit } from 'octokit'
-const Octokit = (window as any).Octokit
+// // Was having a lot of trouble importing from npm package
+// // Was getting message "Failed to resolve entry for package "@octokit/plugin-retry". The package may have incorrect main/module/exports specified in its package.json."
+// // This wasn't happening for CRA (only Vite)
+// // So loaded it in index.html and stored in in window.Octokit
+// // import { Octokit } from 'octokit'
+// const Octokit = (window as any).Octokit
+
+// The above problem seems to have been resolved via node v18
+
+import { Octokit } from 'octokit'
 
 const storeGithubFile = async ({fileData, uri}: {fileData: ArrayBuffer, uri: string}) => {
     const {userName, repoName, branchName, fileName} = parseGitHubFileUri(uri)
