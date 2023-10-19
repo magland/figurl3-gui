@@ -5,13 +5,17 @@ import MainWindow from './MainWindow/MainWindow'
 import SetupRtcshare from './Rtcshare/SetupRtcshare'
 import theme from './theme'
 
+// get hide url query parameter
+const urlParams = new URLSearchParams(window.location.search)
+const hideApplicationBar = urlParams.get('hide') === '1'
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
         <GithubAuthSetup>
           <SetupRtcshare>
-            <MainWindow hideApplicationBar={false} />
+            <MainWindow hideApplicationBar={hideApplicationBar} />
           </SetupRtcshare>
         </GithubAuthSetup>
       </BrowserRouter>
