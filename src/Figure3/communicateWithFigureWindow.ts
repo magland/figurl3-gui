@@ -403,6 +403,9 @@ const _getFileUrlFromUri = async (uri: string, o: {kacheryGatewayUrl: string, gi
         requestedFiles[uri] = {size, name: o.name || (query.label as string) || undefined}
         return {url, size, foundLocally, sha1}
     }
+    else if (uri.startsWith('http://') || uri.startsWith('https://')) {
+        return {url: uri, foundLocally: false, sha1: ''}
+    }
     else return undefined
 }
 
@@ -427,7 +430,7 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
     if (!requestedFileUris.includes(uri)) {
         requestedFileUris.push(uri)
     }
-    if (uri.startsWith('sha1://')) {
+    if (uri.startsWith('sha1://') || uri.startsWith('http://') || uri.startsWith('https://')) {
         const aa = await _getFileUrlFromUri(uri, o)
         if (!aa) return undefined
         const {url, size, foundLocally, sha1} = aa
@@ -468,7 +471,7 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
         }
         const arrayBuffer = concatenateArrayBuffers(chunks)
         const doStoreLocally = ((localKacheryServerIsEnabled()) && (!foundLocally) && (await localKacheryServerIsAvailable({retry: false})))
-        if (doStoreLocally) {
+        if ((doStoreLocally) && (sha1)) {
             // note: I tried doing this via streaming, but had a terrible time getting it to work by posting chunks. Tried both axios and fetch.
             console.info(`STORING CONTENT LOCALLY: sha1/${sha1}`)
             await fetch(`${localKacheryServerBaseUrl}/upload/sha1/${sha1}`, {
