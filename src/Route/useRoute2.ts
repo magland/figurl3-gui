@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import RoutePath, { isRoutePath } from "./RoutePath"
 import QueryString from 'querystring'
@@ -9,6 +9,8 @@ export const useRoute2 = () => {
     const location = useLocation()
     const navigate = useNavigate()
 
+    const [viewUrlBase, setViewUrlBase] = useState<string | undefined>(undefined)
+
     const p = location.pathname
     const routePath: RoutePath = isRoutePath(p) ? p : '/home'
 
@@ -16,12 +18,24 @@ export const useRoute2 = () => {
     const qs = location.search.slice(1)
     const query = useMemo(() => (QueryString.parse(qs)), [qs]);
     const viewUri = query.v ? query.v as string : undefined
-    let viewUrl = viewUri
-    let viewUrlBase = viewUrl
-    if ((viewUrl) && (viewUrl.startsWith('gs://'))) {
-        viewUrlBase = urlFromUri(viewUrl)
-        viewUrl = viewUrlBase + '/index.html'
-    }
+
+    useEffect(() => {
+        let canceled = false
+        if (!viewUri) {
+            setViewUrlBase(undefined)
+            return
+        }
+        urlFromUri(viewUri).then((url) => {
+            if (canceled) return
+            setViewUrlBase(url)
+        }).catch((err) => {
+            console.warn(err)
+            if (canceled) return
+            setViewUrlBase(undefined)
+        })
+        return () => { canceled = true }
+    }, [viewUri])
+    
     const figureDataUri = query.d ? query.d as string : undefined
     const label = query.label ? query.label as any as string : ''
     const zone: string | undefined = query.zone ? query.zone as any as string : undefined
@@ -44,6 +58,14 @@ export const useRoute2 = () => {
         const search2 = queryString(query2)
         navigate({...location, pathname: pathname2, search: search2})
     }, [location, navigate])
+
+    const viewUrl = viewUrlBase ? (
+        !viewUrlBase.endsWith('.html') && !viewUrlBase.endsWith('.htm') ? (
+            viewUrlBase + '/index.html'
+        ) : (
+            viewUrlBase
+        )
+     ) : undefined
 
     return {url, routePath, setRoute, queryString: qs, viewUri, viewUrl, viewUrlBase, figureDataUri, label, zone, sh, dir}
 }
