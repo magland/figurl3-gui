@@ -6,6 +6,7 @@ const urlFromUri = async (uri: string) => {
         return `https://storage.googleapis.com/${p}`
     }
     else if (uri.startsWith('npm://')) {
+        // See: https://stackoverflow.com/questions/60041553/why-unpkg-is-free-to-use-and-what-will-happen-if-i-overuse
         const p = uri.slice("npm://".length)
         return `https://unpkg.com/${p}`
     }

@@ -163,16 +163,26 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
 
     const src = useMemo(() => {
         if (!viewUrl) return ''
-        return viewUrl
 
         // NOTE: we used to pass figureId and parentOrigin as query parameters, but now we pass them as messages
         // This is because sometimes the child window url gets redirected (e.g., by unpkg) and then the query parameters get lost
 
-        // let src = `${viewUrl}?parentOrigin=${parentOrigin}&figureId=${figureId}`
-        // if (queryParams.s) {
-        //     src += `&s=${encodeURIComponent(queryParams.s)}`
-        // }
-        // return src
+        // however, to support old figurl links that don't support the message version of the protocol,
+        // we still need to pass the figureId and parentOrigin as query parameters
+        // but we won't do it in the new recommended way of doing things, using npm:// urls
+        // to make sure that we are not relying on the query method
+
+        if (viewUrl.startsWith('npm://')) {
+            return viewUrl // no query parameters
+        }
+        else {
+            // as mentioned above, we need to pass query parameters for backwards compatibility with very old figurl links
+            let src = `${viewUrl}?parentOrigin=${parentOrigin}&figureId=${figureId}`
+            if (queryParams.s) {
+                src += `&s=${encodeURIComponent(queryParams.s)}`
+            }
+            return src
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [figureId, viewUrl]) // intentionally exclude query.s from dependencies so we don't get a refresh when state changes
 
