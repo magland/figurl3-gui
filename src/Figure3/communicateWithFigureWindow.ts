@@ -430,6 +430,13 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
     if (!requestedFileUris.includes(uri)) {
         requestedFileUris.push(uri)
     }
+    if (uri.startsWith('zenodo://')) {
+        const p = uri.slice("zenodo://".length)
+        const aa = p.split('/')
+        const recordId = aa[0]
+        const fileName = aa.slice(1).join('/')
+        uri = `https://zenodo.org/api/records/${recordId}/files/${fileName}/content`
+    }
     if (uri.startsWith('sha1://') || uri.startsWith('http://') || uri.startsWith('https://')) {
         const aa = await _getFileUrlFromUri(uri, o)
         if (!aa) return undefined
