@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // findFile
 
-import { isNodeId, isSignature, NodeId, Signature } from "@figurl/interface/dist/viewInterface/kacheryTypes"
+import { isSignature, Signature } from "./viewInterface/kacheryTypes"
 import validateObject, { isBoolean, isEqualTo, isNumber, isOneOf, isString, optional } from "../validateObject"
 import { Client, isClient } from "./Client"
 import { isResource, Resource } from "./Resource"
@@ -14,7 +14,7 @@ export type FindFileRequest = {
         hash: string
         zone?: string
     }
-    fromClientId?: NodeId
+    fromClientId?: string
     signature?: Signature
     githubUserId?: string
     githubAccessToken?: string
@@ -32,7 +32,7 @@ export const isFindFileRequest = (x: any): x is FindFileRequest => {
     }
     return validateObject(x, {
         payload: isPayload,
-        fromClientId: optional(isNodeId),
+        fromClientId: optional(isString),
         signature: optional(isSignature),
         githubUserId: optional(isString),
         githubAccessToken: optional(isString)
@@ -75,7 +75,7 @@ export type InitiateFileUploadRequest = {
         hash: string
         zone?: string
     }
-    fromClientId?: NodeId
+    fromClientId?: string
     signature?: Signature
     githubUserId?: string
     githubAccessToken?: string
@@ -94,7 +94,7 @@ export const isInitiateFileUploadRequest = (x: any): x is InitiateFileUploadRequ
     }
     return validateObject(x, {
         payload: isPayload,
-        fromClientId: optional(isNodeId),
+        fromClientId: optional(isString),
         signature: optional(isSignature),
         githubUserId: optional(isString),
         githubAccessToken: optional(isString)
@@ -132,7 +132,7 @@ export type FinalizeFileUploadRequest = {
         size: number
         zone?: string
     }
-    fromClientId?: NodeId
+    fromClientId?: string
     signature?: Signature
     githubUserId?: string
     githubAccessToken?: string
@@ -152,7 +152,7 @@ export const isFinalizeFileUploadRequest = (x: any): x is FinalizeFileUploadRequ
     }
     return validateObject(x, {
         payload: isPayload,
-        fromClientId: optional(isNodeId),
+        fromClientId: optional(isString),
         signature: optional(isSignature),
         githubUserId: optional(isString),
         githubAccessToken: optional(isString)
@@ -176,10 +176,10 @@ export type GetClientInfoRequest = {
     payload: {
         type: 'getClientInfo'
         timestamp: number
-        clientId: NodeId
+        clientId: string
         zone?: string
     }
-    fromClientId: NodeId
+    fromClientId: string
     signature: Signature
     githubUserId?: string
     githubAccessToken?: string
@@ -190,13 +190,13 @@ export const isGetClientInfoRequest = (x: any): x is GetClientInfoRequest => {
         return validateObject(y, {
             type: isEqualTo('getClientInfo'),
             timestamp: isNumber,
-            clientId: isNodeId,
+            clientId: isString,
             zone: optional(isString)
         })
     }
     return validateObject(x, {
         payload: isPayload,
-        fromClientId: optional(isNodeId),
+        fromClientId: optional(isString),
         signature: optional(isSignature),
         githubUserId: optional(isString),
         githubAccessToken: optional(isString)
@@ -227,7 +227,7 @@ export type GetResourceInfoRequest = {
         resourceName: string
         zone?: string
     }
-    fromClientId: NodeId
+    fromClientId: string
     signature: Signature
     githubUserId?: string
     githubAccessToken?: string
@@ -244,7 +244,7 @@ export const isGetResourceInfoRequest = (x: any): x is GetResourceInfoRequest =>
     }
     return validateObject(x, {
         payload: isPayload,
-        fromClientId: optional(isNodeId),
+        fromClientId: optional(isString),
         signature: optional(isSignature),
         githubUserId: optional(isString),
         githubAccessToken: optional(isString)
@@ -274,7 +274,7 @@ export type GetZoneInfoRequest = {
         timestamp: number
         zoneName: string
     }
-    fromClientId?: NodeId
+    fromClientId?: string
     signature?: Signature
     githubUserId?: string
     githubAccessToken?: string
@@ -290,7 +290,7 @@ export const isGetZoneInfoRequest = (x: any): x is GetZoneInfoRequest => {
     }
     return validateObject(x, {
         payload: isPayload,
-        fromClientId: optional(isNodeId),
+        fromClientId: optional(isString),
         signature: optional(isSignature),
         githubUserId: optional(isString),
         githubAccessToken: optional(isString)

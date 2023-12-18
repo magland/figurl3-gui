@@ -1,6 +1,6 @@
 import nacl from 'tweetnacl'
 import { Buffer } from 'buffer'
-import { isPrivateKeyHex, isPublicKeyHex, isSignature, KeyPair, PrivateKey, PrivateKeyHex, PublicKey, PublicKeyHex, Sha1Hash, Signature } from '@figurl/interface/dist/viewInterface/kacheryTypes'
+import { isPrivateKeyHex, isPublicKeyHex, isSignature, KeyPair, PrivateKey, PrivateKeyHex, PublicKey, PublicKeyHex, Sha1Hash, Signature } from '../viewInterface/kacheryTypes'
 import { JSONValue } from '../../validateObject'
 import sha1 from 'sha1' // need this package because was having trouble with crypto browserify
 

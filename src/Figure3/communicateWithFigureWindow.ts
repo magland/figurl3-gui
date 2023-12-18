@@ -1,6 +1,5 @@
-import { FigurlRequest, FigurlResponse, isFigurlRequest, RDDir, StoreGithubFileResponse as StoreGithubFileResponseFigurl } from "@figurl/interface/dist/viewInterface/FigurlRequestTypes"
-import { UserId } from "@figurl/interface/dist/viewInterface/kacheryTypes"
-import { FileDownloadProgressMessage, SetCurrentUserMessage } from "@figurl/interface/dist/viewInterface/MessageToChildTypes"
+import { FigurlRequest, FigurlResponse, isFigurlRequest, RDDir, StoreGithubFileResponse as StoreGithubFileResponseFigurl } from "./viewInterface/FigurlRequestTypes"
+import { FileDownloadProgressMessage, SetCurrentUserMessage } from "./viewInterface/MessageToChildTypes"
 import axios from "axios"
 import QueryString from 'querystring'
 import { MutableRefObject } from "react"
@@ -9,7 +8,7 @@ import { localKacheryServerBaseUrl, localKacheryServerIsAvailable, localKacheryS
 import RtcshareFileSystemClient from "../Rtcshare/RtcshareDataManager/RtcshareFileSystemClient"
 import { signMessage } from "./crypto/signatures"
 import deserializeReturnValue from "./deserializeReturnValue"
-import { StoreFileRequest, StoreFileResponse, StoreGithubFileRequest, StoreGithubFileResponse } from "@figurl/interface/dist/viewInterface/FigurlRequestTypes"
+import { StoreFileRequest, StoreFileResponse, StoreGithubFileRequest, StoreGithubFileResponse } from "./viewInterface/FigurlRequestTypes"
 import { FindFileRequest, isFindFileResponse } from "./GatewayRequest"
 import { getKacheryCloudClientInfo } from "./getKacheryCloudClientInfo"
 import kacheryCloudStoreFile from "./kacheryCloudStoreFile"
@@ -199,80 +198,175 @@ const communicateWithFigureWindow = (
                     figureData: {}
                 }
             }
-            const a = await _loadFileFromUri(figureDataUri, undefined, undefined, () => {}, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone, name: 'root', rtcshareFileSystemClient, rtcshareBaseDir})
-            if (!a) return
-            const dec = new TextDecoder()
-            const figureData = await deserializeReturnValue(JSON.parse(dec.decode(a.arrayBuffer)))
-            return {
-                type: 'getFigureData',
-                figureData
+            if (!req.figurlProtocolVersion) {
+                // old way for old figures (which includes deserialization of return value)
+                const a = await _loadFileFromUri(figureDataUri, undefined, undefined, () => {}, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone, name: 'root', rtcshareFileSystemClient, rtcshareBaseDir})
+                if (!a) return
+                const dec = new TextDecoder()
+                const figureData = await deserializeReturnValue(JSON.parse(dec.decode(a.arrayBuffer)))
+                return {
+                    type: 'getFigureData',
+                    figureData
+                }
+            }
+            else if (req.figurlProtocolVersion === 'p1') {
+                // protocol p1
+                const a = await _loadFileFromUri(figureDataUri, undefined, undefined, () => {}, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone, name: 'root', rtcshareFileSystemClient, rtcshareBaseDir})
+                if (!a) return
+                const dec = new TextDecoder()
+                const figureData = JSON.parse(dec.decode(a.arrayBuffer))
+                return {
+                    type: 'getFigureData',
+                    figureData
+                }
+            }
+            else {
+                throw Error(`Unexpected figurl protocol version: ${req.figurlProtocolVersion}`)
             }
         }
         else if (req.type === 'getFileData') {
-            const onProgress = (a: {loaded: number, total: number}) => {
-                const mm: FileDownloadProgressMessage = {
-                    type: 'fileDownloadProgress',
-                    uri: req.uri,
-                    loaded: a.loaded,
-                    total: a.total
+            if (!req.figurlProtocolVersion) {
+                // old way for old figures (which includes option of deserialization of return value)
+                const onProgress = (a: {loaded: number, total: number}) => {
+                    const mm: FileDownloadProgressMessage = {
+                        type: 'fileDownloadProgress',
+                        uri: req.uri,
+                        loaded: a.loaded,
+                        total: a.total
+                    }
+                    contentWindow.postMessage(mm, '*')
                 }
-                contentWindow.postMessage(mm, '*')
-            }
-            let a: {
-                arrayBuffer: ArrayBuffer
-                size?: number
-                foundLocally: boolean
-            } | undefined
-            try {
-                a = await _loadFileFromUri(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone, rtcshareFileSystemClient, rtcshareBaseDir})
-            }
-            catch(err: any) {
+                let a: {
+                    arrayBuffer: ArrayBuffer
+                    size?: number
+                    foundLocally: boolean
+                } | undefined
+                try {
+                    a = await _loadFileFromUri(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone, rtcshareFileSystemClient, rtcshareBaseDir})
+                }
+                catch(err: any) {
+                    return {
+                        type: 'getFileData',
+                        errorMessage: `Error loading file data: ${err.message}`
+                    }
+                }
+                if (!a) {
+                    return {
+                        type: 'getFileData',
+                        errorMessage: `Unable to load file data: ${req.uri}`
+                    }
+                }
+                const rt = req.responseType || 'json-deserialized'
+                let fileData
+                const dec = new TextDecoder()
+                if (rt === 'json-deserialized') {
+                    if (req.startByte !== undefined) {
+                        throw Error('Cannot use startByte/endByte for json-serialized response type')
+                    }
+                    fileData = await deserializeReturnValue(JSON.parse(dec.decode(a?.arrayBuffer)))
+                }
+                else if (rt === 'json') {
+                    if (req.startByte !== undefined) {
+                        throw Error('Cannot use startByte/endByte for json response type')
+                    }
+                    fileData = JSON.parse(dec.decode(a.arrayBuffer))
+                }
+                else if (rt === 'binary') {
+                    fileData = a.arrayBuffer
+                }
+                else { // text
+                    fileData = dec.decode(a.arrayBuffer)
+                }
                 return {
                     type: 'getFileData',
-                    errorMessage: `Error loading file data: ${err.message}`
+                    fileData
                 }
             }
-            if (!a) {
+            else if (req.figurlProtocolVersion === 'p1') {
+                // protocol p1
+                const onProgress = (a: {loaded: number, total: number}) => {
+                    const mm: FileDownloadProgressMessage = {
+                        type: 'fileDownloadProgress',
+                        uri: req.uri,
+                        loaded: a.loaded,
+                        total: a.total
+                    }
+                    contentWindow.postMessage(mm, '*')
+                }
+                let a: {
+                    arrayBuffer: ArrayBuffer
+                    size?: number
+                    foundLocally: boolean
+                } | undefined
+                try {
+                    a = await _loadFileFromUri(req.uri, req.startByte, req.endByte, onProgress, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone, rtcshareFileSystemClient, rtcshareBaseDir})
+                }
+                catch(err: any) {
+                    return {
+                        type: 'getFileData',
+                        errorMessage: `Error loading file data: ${err.message}`
+                    }
+                }
+                if (!a) {
+                    return {
+                        type: 'getFileData',
+                        errorMessage: `Unable to load file data: ${req.uri}`
+                    }
+                }
+                const rt = req.responseType || 'json'
+                if (req.responseType === 'json-deserialized') {
+                    throw Error('Unexpected response type for protocol p1: json-deserialized')
+                }
+                let fileData
+                const dec = new TextDecoder()
+                if (rt === 'json') {
+                    if (req.startByte !== undefined) {
+                        throw Error('Cannot use startByte/endByte for json response type')
+                    }
+                    fileData = JSON.parse(dec.decode(a.arrayBuffer))
+                }
+                else if (rt === 'binary') {
+                    fileData = a.arrayBuffer
+                }
+                else { // text
+                    fileData = dec.decode(a.arrayBuffer)
+                }
                 return {
                     type: 'getFileData',
-                    errorMessage: `Unable to load file data: ${req.uri}`
+                    fileData
                 }
             }
-            const rt = req.responseType || 'json-deserialized'
-            let fileData
-            const dec = new TextDecoder()
-            if (rt === 'json-deserialized') {
-                if (req.startByte !== undefined) {
-                    throw Error('Cannot use startByte/endByte for json-serialized response type')
-                }
-                fileData = await deserializeReturnValue(JSON.parse(dec.decode(a?.arrayBuffer)))
-            }
-            else if (rt === 'json') {
-                if (req.startByte !== undefined) {
-                    throw Error('Cannot use startByte/endByte for json response type')
-                }
-                fileData = JSON.parse(dec.decode(a.arrayBuffer))
-            }
-            else if (rt === 'binary') {
-                fileData = a.arrayBuffer
-            }
-            else { // text
-                fileData = dec.decode(a.arrayBuffer)
-            }
-            return {
-                type: 'getFileData',
-                fileData
+            else {
+                throw Error(`Unexpected figurl protocol version: ${req.figurlProtocolVersion}`)
             }
         }
         else if (req.type === 'getFileDataUrl') {
-            const aa = await _getFileUrlFromUri(req.uri, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone})
-            if (!aa) return {
-                type: 'getFileDataUrl',
-                errorMessage: `Unable to get file URL from URI: ${req.uri}`
+            if (!req.figurlProtocolVersion) {
+                // old way for old figures
+                const aa = await _getFileUrlFromUri(req.uri, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone})
+                if (!aa) return {
+                    type: 'getFileDataUrl',
+                    errorMessage: `Unable to get file URL from URI: ${req.uri}`
+                }
+                return {
+                    type: 'getFileDataUrl',
+                    fileDataUrl: aa.url
+                }
             }
-            return {
-                type: 'getFileDataUrl',
-                fileDataUrl: aa.url
+            else if (req.figurlProtocolVersion === 'p1') {
+                // protocol p1 - actually no different from old way
+                const aa = await _getFileUrlFromUri(req.uri, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone})
+                if (!aa) return {
+                    type: 'getFileDataUrl',
+                    errorMessage: `Unable to get file URL from URI: ${req.uri}`
+                }
+                return {
+                    type: 'getFileDataUrl',
+                    fileDataUrl: aa.url
+                }
+            }
+            else {
+                throw Error(`Unexpected figurl protocol version: ${req.figurlProtocolVersion}`)
             }
         }
         else if (req.type === 'setUrlState') {
@@ -355,7 +449,7 @@ const communicateWithFigureWindow = (
             const githubAuth = githubAuthRef.current
             const msg: SetCurrentUserMessage = {
                 type: 'setCurrentUser',
-                userId: githubAuth && githubAuth.userId ? githubAuth.userId as any as UserId : undefined
+                userId: githubAuth && githubAuth.userId ? githubAuth.userId : undefined
             }
             contentWindow.postMessage(msg, '*')
         }

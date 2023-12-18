@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // getZoneInfo
 
-import { isNodeId, isSignature, NodeId, Signature } from "@figurl/interface/dist/viewInterface/kacheryTypes"
+import { isSignature, Signature } from "./viewInterface/kacheryTypes"
 import axios from "axios"
 import validateObject, { isBoolean, isEqualTo, isNumber, isString, optional } from "../validateObject"
 import { signMessage } from "./crypto/signatures"
@@ -13,7 +13,7 @@ export type GetZoneInfoRequest = {
         timestamp: number
         zoneName: string
     }
-    fromClientId: NodeId
+    fromClientId: string
     signature: Signature
 }
 
@@ -27,7 +27,7 @@ export const isGetZoneInfoRequest = (x: any): x is GetZoneInfoRequest => {
     }
     return validateObject(x, {
         payload: isPayload,
-        fromClientId: isNodeId,
+        fromClientId: isString,
         signature: isSignature
     })
 }

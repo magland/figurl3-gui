@@ -1,7 +1,7 @@
-import { isKeyPair, KeyPair, NodeId, publicKeyHexToNodeId } from "@figurl/interface/dist/viewInterface/kacheryTypes"
+import { isKeyPair, KeyPair, publicKeyHexToNodeId } from "./viewInterface/kacheryTypes"
 import { createKeyPair, publicKeyToHex } from "./crypto/signatures"
 
-export const getKacheryCloudClientInfo = async (): Promise<{clientId: NodeId, keyPair: KeyPair}> => {
+export const getKacheryCloudClientInfo = async (): Promise<{clientId: string, keyPair: KeyPair}> => {
     const keyPair: KeyPair = await getKacheryCloudClientKeyPair()
     // TODO: ask user for permission to do the [purpose] for this visualization plugin
     return {clientId: publicKeyHexToNodeId(publicKeyToHex(keyPair.publicKey)), keyPair}

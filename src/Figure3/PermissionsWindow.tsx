@@ -1,4 +1,4 @@
-import { JSONStringifyDeterministic } from "@figurl/interface/dist/viewInterface/kacheryTypes";
+import { JSONStringifyDeterministic } from "./viewInterface/kacheryTypes";
 import { Button } from "@mui/material";
 import { FunctionComponent, MutableRefObject, useEffect, useMemo } from "react";
 import GitHubLoginWindow from "../GitHub/GitHubLoginWindow";

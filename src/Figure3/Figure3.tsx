@@ -1,5 +1,5 @@
-import { JSONStringifyDeterministic } from '@figurl/interface/dist/viewInterface/kacheryTypes';
-import { ReportUrlStateChangeMessage } from '@figurl/interface/dist/viewInterface/MessageToChildTypes';
+import { JSONStringifyDeterministic } from './viewInterface/kacheryTypes';
+import { ReportUrlStateChangeMessage } from './viewInterface/MessageToChildTypes';
 import QueryString from 'querystring';
 import { FunctionComponent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Location, useLocation, useNavigate } from "react-router-dom";
