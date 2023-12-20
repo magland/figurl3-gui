@@ -1,4 +1,4 @@
-import { isArrayOf, isBoolean, isEqualTo, isJSONObject, isNumber, isOneOf, isString, optional, validateObject } from "@figurl/core-utils"
+import { isArrayOf, isBoolean, isEqualTo, isJSONObject, isNumber, isOneOf, isString, optional, validateObject } from "@fi-sci/misc"
 
 // getFigureData
 

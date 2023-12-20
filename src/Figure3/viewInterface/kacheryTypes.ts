@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { validateObject, isArrayOf, isBoolean, isJSONObject, isNumber, isObject, isObjectOf, isString, JSONObject, JSONValue, optional } from '@figurl/core-utils';
+import { validateObject, isArrayOf, isBoolean, isJSONObject, isNumber, isObject, isObjectOf, isString, optional } from '@fi-sci/misc';
 
 // This is a hack because there is no npm:process-browserify for package.json
 const process = (window as any).process || {
@@ -69,7 +69,7 @@ export const isHostName = (x: any): x is HostName => {
     // can we be even more precise here? e.g. restrict number of elements?
     if (!isString(x)) return false;
     let result = true;
-    x.split(".").forEach((element) => {
+    x.split(".").forEach((element: string) => {
         if (element.length === 0) result = false;
         if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(element)) result = false;
     });
@@ -109,7 +109,7 @@ export const isNodeLabel = (x: any): x is NodeLabel => {
     if (!isString(x)) return false
     if (x.length > 20) return false
     let result = true
-    x.split(".").forEach((element) => {
+    x.split(".").forEach((element: string) => {
         if (element.length === 0) result = false
         if (!/^[a-zA-Z0-9@]([a-zA-Z0-9@-]*[a-zA-Z0-9@])?$/.test(element)) result = false
     });
@@ -313,7 +313,7 @@ export const isChannelName = (x: any): x is ChannelName => {
     if (x.length > 40) return false
     if (x.length < 3) return false
     let result = true
-    x.split(".").forEach((element) => {
+    x.split(".").forEach((element: string) => {
         if (element.length === 0) result = false
         if (!/^[a-zA-Z0-9_-]([a-zA-Z0-9_-]*[a-zA-Z0-9_-])?$/.test(element)) result = false
     })
@@ -332,7 +332,7 @@ export const isTaskFunctionId = (x: any): x is TaskFunctionId => {
     if (!isString(x)) return false;
     if (x.length > 400) return false
     let result = true
-    x.split(".").forEach((element) => {
+    x.split(".").forEach((element: string) => {
         if (element.length === 0) result = false
         if (!/^[a-zA-Z0-9@_-]([a-zA-Z0-9@_-]*[a-zA-Z0-9@_-])?$/.test(element)) result = false
     })
@@ -409,7 +409,7 @@ export const isFileKeyHash = (x: any): x is FileKeyHash => {
     return isSha1Hash(x) ? true : false
 }
 export const fileKeyHash = (fileKey: FileKey) => {
-    return sha1OfObject(fileKey as any as JSONObject) as any as FileKeyHash
+    return sha1OfObject(fileKey as any as object) as any as FileKeyHash
 }
 
 
@@ -493,7 +493,7 @@ export const isFeedSubfeedId = (x: any): x is FeedSubfeedId => {
 
 
 // SubfeedMessage
-export interface SubfeedMessage extends JSONObject {
+export interface SubfeedMessage extends Object {
     __subfeedMessage__: never;
 };
 export const isSubfeedMessage = (x: any): x is SubfeedMessage => {
@@ -535,7 +535,7 @@ export const isSignedSubfeedMessage = (x: any): x is SignedSubfeedMessage => {
 
 
 // SubmittedSubfeedMessage
-export interface SubmittedSubfeedMessage extends JSONObject {
+export interface SubmittedSubfeedMessage extends Object {
     __submittedSubfeedMessage__: never;
 };
 export const isSubmittedSubfeedMessage = (x: any): x is SubmittedSubfeedMessage => {
@@ -727,7 +727,7 @@ export const pathifyHash = (x: Sha1Hash | FeedId | SubfeedHash) => {
     return `${x[0]}${x[1]}/${x[2]}${x[3]}/${x[4]}${x[5]}/${x}`
 }
 
-export const sha1OfObject = (x: JSONObject): Sha1Hash => {
+export const sha1OfObject = (x: Object): Sha1Hash => {
     return sha1OfString(JSONStringifyDeterministic(x))
 }
 export const sha1OfString = (x: string): Sha1Hash => {
@@ -760,8 +760,8 @@ export const publicKeyHexToNodeId = (x: PublicKeyHex) : string => {
 }
 
 export type MutableRecord = {
-    key: JSONValue
-    value: JSONValue
+    key: any
+    value: any
 }
 
 export type UserConfig = {

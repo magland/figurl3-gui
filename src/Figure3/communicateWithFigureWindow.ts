@@ -74,7 +74,7 @@ const communicateWithFigureWindow = (
             }
             else {
                 console.warn(req)
-                console.warn('Invalid figurl request from window')
+                console.warn('Invalid figurl request from window **')
             }
         })()
     })

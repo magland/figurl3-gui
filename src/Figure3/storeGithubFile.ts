@@ -8,6 +8,7 @@ import { getGitHubTokenInfoFromLocalStorage } from "../GithubAuth/getGithubAuthF
 // const Octokit = (window as any).Octokit
 
 // The above problem seems to have been resolved via node v18
+// AND using package octokit@3
 
 import { Octokit } from 'octokit'
 

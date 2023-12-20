@@ -1,4 +1,4 @@
-import { isEqualTo, isNumber, isOneOf, isString, optional, validateObject } from "@figurl/core-utils";
+import { isEqualTo, isNumber, isOneOf, isString, optional, validateObject } from "@fi-sci/misc";
 import { FigurlResponse, isFigurlResponse } from "./FigurlRequestTypes";
 
 /// figurl Response
