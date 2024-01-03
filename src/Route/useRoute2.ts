@@ -36,7 +36,13 @@ export const useRoute2 = () => {
         return () => { canceled = true }
     }, [viewUri])
     
-    const figureDataUri = query.d ? query.d as string : undefined
+    let figureDataUri = query.d ? query.d as string : undefined
+    
+    // handle case where d query parameter is a json object
+    if ((figureDataUri) && (decodeURIComponent(figureDataUri).startsWith('{'))) {
+        figureDataUri = 'data:application/json;base64,' + btoa(decodeURIComponent(figureDataUri))
+    }
+
     const label = query.label ? query.label as any as string : ''
     const zone: string | undefined = query.zone ? query.zone as any as string : undefined
     const sh: string | undefined = query.sh ? query.sh as any as string : undefined

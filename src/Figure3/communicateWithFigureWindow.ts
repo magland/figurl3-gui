@@ -591,6 +591,11 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
             return undefined
         }
     }
+    else if (uri.startsWith('data:application/json;base64,')) {
+        const jsonStr = atob(uri.slice('data:application/json;base64,'.length))
+        const arrayBuffer = (new TextEncoder()).encode(jsonStr).buffer
+        return {arrayBuffer, size: arrayBuffer.byteLength, foundLocally: false}
+    }
     else if (uri.startsWith('rtcshare://')) {
         if (!o.rtcshareFileSystemClient) {
             throw Error('No rtcshare client')
