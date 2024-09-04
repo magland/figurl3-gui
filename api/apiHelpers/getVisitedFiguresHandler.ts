@@ -6,8 +6,13 @@ const getVisitedFiguresHandler = async (request: GetVisitedFiguresRequest): Prom
         viewUri,
         dataUri,
         zone,
-        figureUrl
+        figureUrl,
+        passcode
     } = request
+    const VITE_GET_VISITED_FIGURES_PASSCODE = process.env.VITE_GET_VISITED_FIGURES_PASSCODE
+    if (passcode !== VITE_GET_VISITED_FIGURES_PASSCODE) {
+        throw Error('Invalid passcode')
+    }
     const db = firestoreDatabase()
     const collection = db.collection('figurl.visitedFigures')
     let query: FirebaseFirestore.Query = collection

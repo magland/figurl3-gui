@@ -58,6 +58,7 @@ export type GetVisitedFiguresRequest = {
     dataUri?: string
     zone?: string
     figureUrl?: string
+    passcode: string
 }
 
 export const isGetVisitedFiguresRequest = (x: any): x is GetVisitedFiguresRequest => {
@@ -66,7 +67,8 @@ export const isGetVisitedFiguresRequest = (x: any): x is GetVisitedFiguresReques
         viewUri: optional(isString),
         dataUri: optional(isString),
         zone: optional(isString),
-        figureUrl: optional(isString)
+        figureUrl: optional(isString),
+        passcode: isString
     })
 }
 
