@@ -1,6 +1,7 @@
 import axios from "axios"
 import { FigureRequest, FigureResponse } from "./FigureRequest"
 import { getReCaptchaToken } from "./reCaptcha"
+import { VisitedFigureRequest, VisitedFigureResponse } from "./VisitedFigureRequest"
 
 const postFigureRequest = async (request: FigureRequest, opts: {reCaptcha: boolean}): Promise<FigureResponse> => {
     let request2: FigureRequest = request
@@ -13,6 +14,20 @@ const postFigureRequest = async (request: FigureRequest, opts: {reCaptcha: boole
     }
     try {
         const x = await axios.post('/api/figures', request2)
+        return x.data
+    }
+    catch(err: any) {
+        if (err.response) {
+            console.log(err.response)
+            throw Error(err.response.data)
+        }
+        else throw err
+    }
+}
+
+export const postVisitedFigureRequest = async (request: VisitedFigureRequest): Promise<VisitedFigureResponse> => {
+    try {
+        const x = await axios.post('/api/visitedFigures', request)
         return x.data
     }
     catch(err: any) {

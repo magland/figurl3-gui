@@ -3,6 +3,7 @@ import Figure3 from '../Figure3/Figure3'
 import GitHubAuthPage from '../GitHub/GitHubAuthPage'
 import HomePage from '../HomePage/HomePage'
 import { useRoute2 } from '../Route/useRoute2'
+import VisitedFiguresPage from '../VisitedFiguresPage/VisitedFiguresPage'
 
 type Props = {
     width: number
@@ -17,7 +18,7 @@ const Routes: FunctionComponent<Props> = ({width, height}) => {
     }
     else if (routePath === '/f') {
         document.title = label
-        
+
         return (
             <Figure3
                 width={width}
@@ -28,6 +29,10 @@ const Routes: FunctionComponent<Props> = ({width, height}) => {
     else if (routePath === '/github/auth') {
         document.title = 'figurl github auth'
         return <GitHubAuthPage />
+    }
+    else if (routePath === '/visited-figures') {
+        document.title = 'figurl visited figures'
+        return <VisitedFiguresPage />
     }
     else {
         document.title = 'figurl'
