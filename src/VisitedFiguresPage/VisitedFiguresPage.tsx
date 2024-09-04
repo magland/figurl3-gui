@@ -1,8 +1,8 @@
-import { FunctionComponent, useEffect, useState } from "react"
-import { GetVisitedFiguresRequest, VisitedFigure, isGetVisitedFiguresResponse, isVisitedFigureResponse } from "../MainWindow/SaveFigure/VisitedFigureRequest"
-import { postVisitedFigureRequest } from "../MainWindow/SaveFigure/postFigureRequest"
 import { Hyperlink } from "@fi-sci/misc"
+import { FunctionComponent, useEffect, useState } from "react"
 import { timeSince } from "../HomePage/SavedFiguresTable"
+import { GetVisitedFiguresRequest, VisitedFigure, isGetVisitedFiguresResponse } from "../MainWindow/SaveFigure/VisitedFigureRequest"
+import { postVisitedFigureRequest } from "../MainWindow/SaveFigure/postFigureRequest"
 
 type VisitedFiguresPageProps = {
     // none
