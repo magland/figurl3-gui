@@ -639,44 +639,47 @@ export const getFileDownloadUrl = async (hashAlg: string, hash: string, kacheryG
 
     const zoneName = zone || 'default';
 
-    if (["scratch", "default", "franklab.default", "aind", "gillespielab"].includes(zoneName)) {
-        return await getFileDownloadUrlNewKachery(hashAlg, hash, zoneName);
-    }
+    return await getFileDownloadUrlNewKachery(hashAlg, hash, zoneName);
 
-    const {clientId, keyPair} = await getKacheryCloudClientInfo()
-    const url = `${kacheryGatewayUrl}/api/gateway`
-    // const url = 'http://localhost:3001/api/kacherycloud'
-    const payload = {
-        type: 'findFile' as FindFileType,
-        timestamp: Date.now(),
-        hashAlg: hashAlg as 'sha1',
-        hash,
-        zone: zoneName
-    }
-    const signature = await signMessage(payload, keyPair)
-    const req: FindFileRequest = {
-        payload,
-        fromClientId: !githubAuth?.userId ? clientId : undefined,
-        signature: !githubAuth?.userId ? signature : undefined,
-        githubUserId: githubAuth?.userId,
-        githubAccessToken: githubAuth?.accessToken
-    }
-    const x = await axios.post(url, req)
-    const resp = x.data
-    if (!isFindFileResponse(resp)) {
-        console.warn(resp)
-        throw Error('Unexpected findFile response')
-    }
-    if ((resp.found) && (resp.url)) {
-        return {
-            url: resp.url,
-            size: resp.size,
-            foundLocally: false
-        }
-    }
-    else {
-        return undefined
-    }
+    // The below is the old system
+    // NOTE: it's possible that some zones in the old system have not been ported over, and those will fail
+    // I did port over scratch, default, default.franklab, aind, and gillespielab, and a couple others
+    // we'll just have to see if anything breaks
+
+    // const {clientId, keyPair} = await getKacheryCloudClientInfo()
+    // const url = `${kacheryGatewayUrl}/api/gateway`
+    // // const url = 'http://localhost:3001/api/kacherycloud'
+    // const payload = {
+    //     type: 'findFile' as FindFileType,
+    //     timestamp: Date.now(),
+    //     hashAlg: hashAlg as 'sha1',
+    //     hash,
+    //     zone: zoneName
+    // }
+    // const signature = await signMessage(payload, keyPair)
+    // const req: FindFileRequest = {
+    //     payload,
+    //     fromClientId: !githubAuth?.userId ? clientId : undefined,
+    //     signature: !githubAuth?.userId ? signature : undefined,
+    //     githubUserId: githubAuth?.userId,
+    //     githubAccessToken: githubAuth?.accessToken
+    // }
+    // const x = await axios.post(url, req)
+    // const resp = x.data
+    // if (!isFindFileResponse(resp)) {
+    //     console.warn(resp)
+    //     throw Error('Unexpected findFile response')
+    // }
+    // if ((resp.found) && (resp.url)) {
+    //     return {
+    //         url: resp.url,
+    //         size: resp.size,
+    //         foundLocally: false
+    //     }
+    // }
+    // else {
+    //     return undefined
+    // }
 }
 
 const getFileDownloadUrlNewKachery = async (hashAlg: string, hash: string, zoneName: string): Promise<{url: string, size: number, foundLocally: boolean} | undefined> => {
