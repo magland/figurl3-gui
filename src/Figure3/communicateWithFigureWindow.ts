@@ -89,7 +89,7 @@ const communicateWithFigureWindow = (
                     uri: undefined
                 }
             }
-            
+
             const {fileData} = req
             const uri = await kacheryCloudStoreFile(fileData, kacheryGatewayUrl, githubAuthRef.current, zone || 'default')
             if (!uri) throw Error('Error storing file')
@@ -637,6 +637,12 @@ export const getFileDownloadUrl = async (hashAlg: string, hash: string, kacheryG
         }
     }
 
+    const zoneName = zone || 'default';
+
+    if (["scratch", "default", "franklab.default", "aind", "gillespielab"].includes(zoneName)) {
+        return await getFileDownloadUrlNewKachery(hashAlg, hash, zoneName);
+    }
+
     const {clientId, keyPair} = await getKacheryCloudClientInfo()
     const url = `${kacheryGatewayUrl}/api/gateway`
     // const url = 'http://localhost:3001/api/kacherycloud'
@@ -645,7 +651,7 @@ export const getFileDownloadUrl = async (hashAlg: string, hash: string, kacheryG
         timestamp: Date.now(),
         hashAlg: hashAlg as 'sha1',
         hash,
-        zone: zone || 'default'
+        zone: zoneName
     }
     const signature = await signMessage(payload, keyPair)
     const req: FindFileRequest = {
@@ -672,6 +678,27 @@ export const getFileDownloadUrl = async (hashAlg: string, hash: string, kacheryG
         return undefined
     }
 }
+
+const getFileDownloadUrlNewKachery = async (hashAlg: string, hash: string, zoneName: string): Promise<{url: string, size: number, foundLocally: boolean} | undefined> => {
+    const url = `https://kachery.vercel.app/api/findFile`
+    const payload = {
+        type: 'findFileRequest',
+        hashAlg,
+        hash,
+        zoneName
+    }
+    const x = await axios.post(url, payload)
+    const resp = x.data
+    if (!resp.found) {
+        return undefined
+    }
+    return {
+        url: resp.url,
+        size: resp.size,
+        foundLocally: false
+    }
+}
+
 
 const getFileDownloadUrlForLocalKacheryServer = async (hashAlg: string, hash: string): Promise<{url: string, size: number} | undefined> => {
     if (!(await localKacheryServerIsAvailable({retry: false}))) {
