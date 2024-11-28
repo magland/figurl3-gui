@@ -497,6 +497,22 @@ const _getFileUrlFromUri = async (uri: string, o: {kacheryGatewayUrl: string, gi
         requestedFiles[uri] = {size, name: o.name || (query.label as string) || undefined}
         return {url, size, foundLocally, sha1}
     }
+    else if (uri.startsWith('kachery:')) {
+        const parts = uri.split(':');
+        if (parts.length < 4) {
+            console.warn(`Invalid kachery URI: ${uri}`);
+            return undefined;
+        }
+        const zone2 = parts[1] || zone;
+        const alg = parts[2];
+        const hash = parts[3];
+        // const label = parts[4];
+        const aa = await getFileDownloadUrl(alg, hash, kacheryGatewayUrl, githubAuth, zone2);
+        if (!aa) return undefined;
+        const {url, size, foundLocally} = aa;
+        requestedFiles[uri] = {size, name: o.name || undefined};
+        return {url, size, foundLocally, sha1: hash};
+    }
     else if (uri.startsWith('http://') || uri.startsWith('https://')) {
         return {url: uri, foundLocally: false, sha1: ''}
     }
@@ -531,7 +547,7 @@ const _loadFileFromUri = async (uri: string, startByte: number | undefined, endB
         const fileName = aa.slice(1).join('/')
         uri = `https://zenodo.org/api/records/${recordId}/files/${fileName}/content`
     }
-    if (uri.startsWith('sha1://') || uri.startsWith('http://') || uri.startsWith('https://')) {
+    if (uri.startsWith('sha1://') || uri.startsWith('kachery:') || uri.startsWith('http://') || uri.startsWith('https://')) {
         const aa = await _getFileUrlFromUri(uri, o)
         if (!aa) return undefined
         const {url, size, foundLocally, sha1} = aa
