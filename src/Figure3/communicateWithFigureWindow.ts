@@ -442,6 +442,12 @@ const communicateWithFigureWindow = (
                 }
             }
         }
+        else if (req.type === "postMessageToParent") {
+            window.parent.postMessage(req.message, '*')
+            return {
+                type: 'postMessageToParent'
+            }
+        }
     }
     let canceled = false
     ; (async () => {
