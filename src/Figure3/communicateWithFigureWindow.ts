@@ -777,3 +777,5 @@ function str2ab(str: string) {
     const enc = new TextEncoder()
     return enc.encode(str)
 }
+
+export default communicateWithFigureWindow;
