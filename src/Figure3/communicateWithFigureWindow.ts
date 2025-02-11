@@ -351,7 +351,6 @@ const communicateWithFigureWindow = (
                 else if (rt === 'binary') {
                     fileData = a.arrayBuffer
                 }
-                }
             }
             else if (req.figurlProtocolVersion === 'p1') {
                 // protocol p1 - actually no different from old way
