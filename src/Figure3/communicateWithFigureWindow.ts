@@ -17,9 +17,21 @@ import storeGithubFile, { loadGitHubFileDataFromUri, parseGitHubFileUri } from "
 import { RtcshareDir } from "../Rtcshare/RtcshareRequest"
 
 const messageListeners: {[figureId: string]: (msg: any) => void} = {}
+const parentMessageListeners: {[figureId: string]: (e: MessageEvent) => void} = {}
 
 function addMessageListener(figureId: string, callback: (msg: any) => void) {
     messageListeners[figureId] = callback
+}
+
+function addParentMessageListener(figureId: string, contentWindow: Window, callback: (e: MessageEvent) => void) {
+    const listener = (e: MessageEvent) => {
+        // Make sure message is from parent window
+        if (e.source === window.parent) {
+            callback(e)
+        }
+    }
+    window.addEventListener('message', listener)
+    parentMessageListeners[figureId] = listener
 }
 
 window.addEventListener('message', (e: MessageEvent) => {
@@ -59,6 +71,16 @@ const communicateWithFigureWindow = (
         const aa = (figureDataUri || '').split('/')
         rtcshareBaseDir = aa.slice(0, aa.length - 1).join('/')
     }
+
+    // Listen for messages from parent intended for this figure
+    addParentMessageListener(figureId, contentWindow, (e: MessageEvent) => {
+        const msg = e.data
+        // Forward messages of type 'messageToFrontend' to child window
+        if ((msg) && (msg.type === 'messageToFrontend') && (msg.figureId === figureId)) {
+            contentWindow.postMessage(msg, '*')
+        }
+    })
+
     addMessageListener(figureId, (msg: any) => {
         ;(async () => {
             const req = msg.request
@@ -78,6 +100,7 @@ const communicateWithFigureWindow = (
             }
         })()
     })
+
     const _handleFigurlRequest = async (req: FigurlRequest): Promise<FigurlResponse | undefined> => {
         const handleStoreFileRequest = async (req: StoreFileRequest): Promise<StoreFileResponse> => {
             if ((req.uri) && (req.uri.startsWith('rtcshare://'))) {
@@ -328,29 +351,6 @@ const communicateWithFigureWindow = (
                 else if (rt === 'binary') {
                     fileData = a.arrayBuffer
                 }
-                else { // text
-                    fileData = dec.decode(a.arrayBuffer)
-                }
-                return {
-                    type: 'getFileData',
-                    fileData
-                }
-            }
-            else {
-                throw Error(`Unexpected figurl protocol version: ${req.figurlProtocolVersion}`)
-            }
-        }
-        else if (req.type === 'getFileDataUrl') {
-            if (!req.figurlProtocolVersion) {
-                // old way for old figures
-                const aa = await _getFileUrlFromUri(req.uri, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone})
-                if (!aa) return {
-                    type: 'getFileDataUrl',
-                    errorMessage: `Unable to get file URL from URI: ${req.uri}`
-                }
-                return {
-                    type: 'getFileDataUrl',
-                    fileDataUrl: aa.url
                 }
             }
             else if (req.figurlProtocolVersion === 'p1') {

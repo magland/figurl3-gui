@@ -49,7 +49,9 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
     const location = useLocation()
     const navigate = useNavigate()
 
-    const figureId = useMemo(() => (randomAlphaLowerString(10)), [])
+    const figureId = useMemo(() => (
+        queryParams.figureId || randomAlphaLowerString(10)
+    ), [])
 
     // need to do this so that onSetUrlState does not have a dependency on location
     const locationRef = useRef<Location>()
@@ -73,7 +75,7 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
                 const msg: ReportUrlStateChangeMessage = {
                     type: 'reportUrlStateChange',
                     state: JSON.parse(queryParams0.s)
-                }   
+                }
                 iframeElement.contentWindow.postMessage(msg, '*')
             }
             const s = queryParams.s ? encodeURIComponent(queryParams.s) : undefined
@@ -108,7 +110,7 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
                 }
             })()
         }
-        return () => {   
+        return () => {
             canceled = true
             removeEventListener('message', listener)
         }
