@@ -351,6 +351,30 @@ const communicateWithFigureWindow = (
                 else if (rt === 'binary') {
                     fileData = a.arrayBuffer
                 }
+                else { // text
+                    fileData = dec.decode(a.arrayBuffer)
+                }
+                return {
+                    type: 'getFileData',
+                    fileData
+                }
+            }
+            else {
+                throw Error(`Unexpected figurl protocol version: ${req.figurlProtocolVersion}`)
+            }
+        }
+        else if (req.type === 'getFileDataUrl') {
+            if (!req.figurlProtocolVersion) {
+                // old way for old figures
+                const aa = await _getFileUrlFromUri(req.uri, {kacheryGatewayUrl, githubAuth: githubAuthRef.current, zone})
+                if (!aa) return {
+                    type: 'getFileDataUrl',
+                    errorMessage: `Unable to get file URL from URI: ${req.uri}`
+                }
+                return {
+                    type: 'getFileDataUrl',
+                    fileDataUrl: aa.url
+                }
             }
             else if (req.figurlProtocolVersion === 'p1') {
                 // protocol p1 - actually no different from old way
@@ -753,5 +777,3 @@ function str2ab(str: string) {
     const enc = new TextEncoder()
     return enc.encode(str)
 }
-
-export default communicateWithFigureWindow
