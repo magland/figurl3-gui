@@ -89,6 +89,7 @@ const Figure3: FunctionComponent<Props> = ({width, height}) => {
                 // eslint-disable-next-line no-constant-condition
                 while (!receivedInitialMessageFromChild) {
                     if (receivedInitialMessageFromChild) break
+                    if (canceled) break
                     iframeElement.contentWindow.postMessage({type: 'initializeFigure', parentOrigin, figureId, s}, '*')
                     const elapsed = Date.now() - timer
                     if (elapsed > 30000) {
