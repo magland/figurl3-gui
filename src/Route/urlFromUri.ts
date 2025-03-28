@@ -8,6 +8,12 @@ const urlFromUri = async (uri: string) => {
     else if (uri.startsWith('npm://')) {
         // See: https://stackoverflow.com/questions/60041553/why-unpkg-is-free-to-use-and-what-will-happen-if-i-overuse
         const p = uri.slice("npm://".length)
+
+        if (p === "@fi-sci/figurl-sortingview@12.0.15/dist/index.html") {
+            // unpkg seems to have stopped working for the this one
+            return "https://tempory.net/@fi-sci/figurl-sortingview-12.0.15/dist/index.html"
+        }
+
         return `https://unpkg.com/${p}`
     }
     else if (uri.startsWith('http://') || uri.startsWith('https://')) {
