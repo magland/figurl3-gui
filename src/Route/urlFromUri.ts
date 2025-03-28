@@ -9,7 +9,7 @@ const urlFromUri = async (uri: string) => {
         // See: https://stackoverflow.com/questions/60041553/why-unpkg-is-free-to-use-and-what-will-happen-if-i-overuse
         const p = uri.slice("npm://".length)
 
-        if (p === "@fi-sci/figurl-sortingview@12.0.15/dist/index.html") {
+        if ((p === "@fi-sci/figurl-sortingview@12.0.15/dist") || (p === "@fi-sci/figurl-sortingview@12/dist")) {
             // unpkg seems to have stopped working for the this one
             return "https://tempory.net/@fi-sci/figurl-sortingview-12.0.15/dist/index.html"
         }
