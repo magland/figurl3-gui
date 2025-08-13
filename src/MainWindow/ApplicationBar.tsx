@@ -34,7 +34,7 @@ const ApplicationBar: FunctionComponent<Props> = ({applicationBarHeight, title})
                     <img src="/logo.png" alt="logo" height={30} style={{paddingBottom: 5, cursor: 'pointer'}} onClick={onHome} />
                     <div>&nbsp;&nbsp;&nbsp;{title}</div>
                     <span style={{marginLeft: 'auto'}} />
-                    {
+                    {/* {
                         <span style={{paddingBottom: 0, color: 'white'}}>
                             <LocalKacheryControl onClick={openLocalKachery} />
                         </span>
@@ -45,7 +45,7 @@ const ApplicationBar: FunctionComponent<Props> = ({applicationBarHeight, title})
                                 <SaveFigureControl onClick={openSaveFigure} color="white" />
                             </span>
                         )
-                    }
+                    } */}
                     {
                         signedIn && (
                             <span style={{fontFamily: 'courier', color: 'lightgray', cursor: 'pointer'}} title={`Signed in as ${userId}`}>{userId}&nbsp;&nbsp;</span>
